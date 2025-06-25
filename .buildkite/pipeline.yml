@@ -1,34 +1,9 @@
 steps:
-  # Step 1: Build & Generate Output
-  - label: ":hammer: Build & Generate Output"
-    command: "./build.sh"
-    key: "build"
-
-  # Step 2: Run verification (can fail)
-  - label: ":test_tube: Verification Tests"
-    command: "./verification.sh"
-    key: "verification"
-    depends_on: "build"
-    soft_fail: true
-
-  # Step 3: Input step for manual review when verification fails
-  - input: "Review Failed Verification"
-    prompt: |
-      :warning: **Verification Failed**
-      
-      The verification tests failed, but you can choose to proceed manually.
-      Please review the verification results above and decide whether it's safe to continue.
-      
-      What would you like to do?
-    fields:
-      - select: "Action"
-        key: "action"
-        required: true
-        default: "stop"
-        options:
-          - label: "Continue to deploy (I've verified it's safe)"
-            value: "continue"
-          - label: "Stop deployment"
-            value: "stop"
-    key: "manual-review"
-    depends_on: "verification"
+  # Simple trigger pipeline
+  - label: ":rocket: Trigger Downstream Pipeline"
+    trigger: "bash-parallel-example"
+    build:
+      message: "Triggered from main pipeline"
+      commit: "${BUILDKITE_COMMIT}"
+      branch: "${BUILDKITE_BRANCH}"
+    key: "trigger"

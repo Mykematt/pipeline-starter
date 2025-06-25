@@ -1,4 +1,15 @@
 steps:
-  - command: "./build.sh" 
+  - label: ":docker: Build & Test with Docker Compose"
+    command: "npm test"
+    plugins:
+      - docker-compose#v4.16.0:
+          run: test
+        
+  - label: ":rocket: Start App Service"
+    command: "npm start"
+    plugins:
+      - docker-compose#v4.16.0:
+          run: app
+          daemon: true
 notify:
-    - webhook: "https://webhook.site/fde6c075-f0d1-4b8a-81af-8fd5244286c0"
+  - webhook: "https://webhook.site/fde6c075-f0d1-4b8a-81af-8fd5244286c0"

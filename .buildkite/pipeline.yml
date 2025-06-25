@@ -1,9 +1,9 @@
 steps:
   # Simple trigger pipeline
-  - label: ":rocket: Trigger Downstream Pipeline"
-    trigger: "demokite"
+  - label: ":rocket: Trigger Self Pipeline"
+    trigger: "starter"
     build:
-      message: "Triggered from starter pipeline"
+      message: "Self-triggered from starter pipeline"
       commit: "${BUILDKITE_COMMIT}"
       branch: "${BUILDKITE_BRANCH}"
     key: "trigger"

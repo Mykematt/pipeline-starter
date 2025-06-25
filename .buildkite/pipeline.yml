@@ -1,4 +1,4 @@
 steps:
-  - command: "./build.sh"
-    notify:
-      - webhook: "https://webhook.site/fde6c075-f0d1-4b8a-81af-8fd5244286c0"
+  - command: "./build.sh" 
+notify:
+    - webhook: "https://webhook.site/fde6c075-f0d1-4b8a-81af-8fd5244286c0"

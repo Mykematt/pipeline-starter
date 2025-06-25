@@ -3,7 +3,7 @@ steps:
   - label: ":rocket: Trigger Downstream Pipeline"
     trigger: "bash-parallel-example"
     build:
-      message: "Triggered from main pipeline"
+      message: "demokite"
       commit: "${BUILDKITE_COMMIT}"
       branch: "${BUILDKITE_BRANCH}"
     key: "trigger"

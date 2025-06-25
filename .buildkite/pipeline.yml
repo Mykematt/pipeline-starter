@@ -1,45 +1,35 @@
 steps:
-  # Step 1: Produce output
+  # Step 1: Build & Generate Output
   - label: ":hammer: Build & Generate Output"
     command: "./build.sh"
     key: "build"
 
-  # Step 2: Run verification (can be flaky)
+  # Step 2: Run verification (can fail)
   - label: ":test_tube: Verification Tests"
     command: "./verification.sh"
     key: "verification"
     depends_on: "build"
     soft_fail: true
 
-  # Wait for verification to complete, but continue even if it fails
-  - wait: ~
-    continue_on_failure: true
-
-  # Step 3: Manual override input (always shows)
-  - block: ":question: Review Results"
+  # Step 3: Input step for manual review when verification fails
+  - input: "Review Failed Verification"
     prompt: |
-      Build completed. Review the verification results above.
+      :warning: **Verification Failed**
       
-      If verification passed: Click 'Continue' to proceed.
-      If verification failed: Verify manually that it's safe to proceed, then click 'Continue'.
+      The verification tests failed, but you can choose to proceed manually.
+      Please review the verification results above and decide whether it's safe to continue.
+      
+      What would you like to do?
     fields:
       - select: "Action"
         key: "action"
         required: true
+        default: "stop"
         options:
-          - label: "Continue to deploy"
+          - label: "Continue to deploy (I've verified it's safe)"
             value: "continue"
-          - label: "Stop here"
+          - label: "Stop deployment"
             value: "stop"
-
-  # Final step: Deploy (only if user chose to continue)
-  - label: ":rocket: Deploy"
-    command: |
-      ACTION=$$(buildkite-agent meta-data get "action")
-      if [ "$$ACTION" = "continue" ]; then
-        echo "Deploying..."
-        echo "Deployment complete!"
-      else
-        echo "Deployment cancelled by user"
-        exit 1
-      fi
+    key: "manual-review"
+    depends_on: "verification"
+    if: build.state == "passed" && verification.state == "failed"

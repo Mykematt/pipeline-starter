@@ -1,6 +1,6 @@
 steps:
   # Simple trigger pipeline
-  - label: ":rocket: Trigger Demokite Pipeline"
+  - label: ":rocket: Triggering a pipeline"
     trigger: "demokite"
     build:
       message: "Triggered from starter pipeline"

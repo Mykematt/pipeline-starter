@@ -32,4 +32,3 @@ steps:
             value: "stop"
     key: "manual-review"
     depends_on: "verification"
-    if: build.state == "passed" && verification.state == "failed"

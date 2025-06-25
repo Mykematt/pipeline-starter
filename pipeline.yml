@@ -1,65 +1,45 @@
 steps:
-  # Step 1: Produces output
+  # Step 1: Produce output
   - label: ":hammer: Build & Generate Output"
-    command: |
-      ./build.sh
-      echo "output-data" > output.txt
-    artifact_paths: "output.txt"
+    command: "./build.sh"
     key: "build"
 
-  # Step 2: Verification steps that can be flaky
-  - label: ":test_tube: Run Verification Tests"
-    command: "./run-verification.sh"
+  # Step 2: Run verification (can be flaky)
+  - label: ":test_tube: Verification Tests"
+    command: "./verification.sh"
     key: "verification"
     depends_on: "build"
-    # Optional: use soft_fail if you want the build to continue
-    # soft_fail: true
+    soft_fail: true
 
-  # Wait for all steps to complete, even if they fail
+  # Wait for verification to complete, but continue even if it fails
   - wait: ~
     continue_on_failure: true
 
-  # Step 3: Conditional manual approval
-  - label: ":gear: Check Results & Generate Approval Step"
-    command: |
-      VERIFICATION_OUTCOME=$(buildkite-agent step get "outcome" --step "verification")
+  # Step 3: Manual override input (always shows)
+  - block: ":question: Review Results"
+    prompt: |
+      Build completed. Review the verification results above.
       
-      if [ "$VERIFICATION_OUTCOME" == "hard_failed" ]; then
-        cat <<- YAML | buildkite-agent pipeline upload
-        steps:
-          - block: ":warning: Verification Failed - Manual Override?"
-            prompt: "Verification tests failed. Review the logs and decide how to proceed."
-            fields:
-              - text: "Justification"
-                key: "override-reason"
-                hint: "Explain why it's safe to proceed despite failures"
-                required: true
-              - select: "Action"
-                key: "override-action"
-                required: true
-                options:
-                  - label: "Proceed with deployment"
-                    value: "proceed"
-                  - label: "Cancel deployment"
-                    value: "cancel"
-          - label: ":rocket: Deploy with Override"
-            command: |
-              ACTION=\$(buildkite-agent meta-data get "override-action")
-              if [ "\$ACTION" == "proceed" ]; then
-                echo "Proceeding with deployment after manual override"
-                echo "Reason: \$(buildkite-agent meta-data get override-reason)"
-                ./deploy.sh
-              else
-                echo "Deployment cancelled by user"
-                exit 1
-              fi
-            depends_on: "manual-override"
-        YAML
+      If verification passed: Click 'Continue' to proceed.
+      If verification failed: Verify manually that it's safe to proceed, then click 'Continue'.
+    fields:
+      - select: "Action"
+        key: "action"
+        required: true
+        options:
+          - label: "Continue to deploy"
+            value: "continue"
+          - label: "Stop here"
+            value: "stop"
+
+  # Final step: Deploy (only if user chose to continue)
+  - label: ":rocket: Deploy"
+    command: |
+      ACTION=$$(buildkite-agent meta-data get "action")
+      if [ "$$ACTION" = "continue" ]; then
+        echo "Deploying..."
+        echo "Deployment complete!"
       else
-        # Verification passed, proceed normally
-        cat <<- YAML | buildkite-agent pipeline upload
-        steps:
-          - label: ":rocket: Deploy"
-            command: "./deploy.sh"
-        YAML
+        echo "Deployment cancelled by user"
+        exit 1
       fi

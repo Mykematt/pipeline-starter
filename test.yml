@@ -42,8 +42,8 @@ steps:
     depends_on: "release-decision"
     command: |
       echo "--- :mag: Getting release decision"
-      ACTION=$(buildkite-agent meta-data get "release-decision.action")
-      NOTES=$(buildkite-agent meta-data get "release-decision.notes" --default "No notes provided")
+      ACTION=$(buildkite-agent meta-data get "action")
+      NOTES=$(buildkite-agent meta-data get "notes" --default "No notes provided")
       
       echo "Decision: $ACTION"
       echo "Notes: $NOTES"
@@ -111,7 +111,7 @@ steps:
         - label: ":x: Abandon Release"
           command: |
             echo "Abandoning release..."
-            NOTES=$(buildkite-agent meta-data get "release-decision.notes" --default "No reason provided")
+            NOTES=$(buildkite-agent meta-data get "notes" --default "No reason provided")
             echo "Reason: $NOTES"
             buildkite-agent meta-data set "final-state" "abandoned"
             buildkite-agent annotate "❌ Release abandoned. Reason: $NOTES" --style "warning" --context "release-status"
@@ -124,7 +124,7 @@ steps:
         - label: ":clock1: Schedule Release"
           command: |
             echo "Scheduling release for later..."
-            NOTES=$(buildkite-agent meta-data get "release-decision.notes" --default "No schedule provided")
+            NOTES=$(buildkite-agent meta-data get "notes" --default "No schedule provided")
             echo "Schedule details: $NOTES"
             buildkite-agent meta-data set "final-state" "scheduled"
             buildkite-agent annotate "🕐 Release scheduled. Details: $NOTES" --style "info" --context "release-status"
@@ -146,9 +146,9 @@ steps:
     command: |
       echo "--- :memo: Final Release Report"
       
-      ACTION=$(buildkite-agent meta-data get "release-decision.action" --default "unknown")
+      ACTION=$(buildkite-agent meta-data get "action" --default "unknown")
       FINAL_STATE=$(buildkite-agent meta-data get "final-state" --default "unknown")
-      NOTES=$(buildkite-agent meta-data get "release-decision.notes" --default "No notes")
+      NOTES=$(buildkite-agent meta-data get "notes" --default "No notes")
       
       cat << EOF
       ========================================

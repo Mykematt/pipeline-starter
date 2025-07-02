@@ -37,7 +37,7 @@ steps:
         key: "notes"
         required: false
 
-  # Step 3: Create dynamic pipeline based on decision
+  # Step 3: Upload release pipeline
   - label: ":pipeline: Execute Release Decision"
     depends_on: "release-decision"
     command: |
@@ -48,134 +48,12 @@ steps:
       echo "Decision: $ACTION"
       echo "Notes: $NOTES"
       
-      echo "--- :scroll: Creating pipeline for: $ACTION"
-      
-      case "$ACTION" in
-        "deploy-prod")
-          cat > release-pipeline.yml << 'EOF'
-      steps:
-        - label: ":shield: Production Pre-checks"
-          command: |
-            echo "Running production safety checks..."
-            echo "- Checking database migrations"
-            echo "- Verifying rollback plan"
-            echo "- Confirming monitoring alerts"
-            sleep 2
-            echo "All checks passed!"
-            
-        - label: ":rocket: Deploy to Production"
-          command: |
-            echo "Deploying to production environment..."
-            echo "- Updating load balancer"
-            echo "- Rolling deployment to servers"
-            echo "- Verifying health checks"
-            sleep 3
-            echo "Production deployment successful!"
-            buildkite-agent meta-data set "final-state" "deployed-production"
-            
-        - label: ":chart_with_upwards_trend: Monitor Deployment"
-          command: |
-            echo "Monitoring production metrics..."
-            echo "- CPU usage: Normal"
-            echo "- Error rate: 0.01%"
-            echo "- Response time: 145ms"
-            buildkite-agent annotate "✅ Production deployment completed successfully!" --style "success" --context "release-status"
-      EOF
-          ;;
-          
-        "deploy-staging")
-          cat > release-pipeline.yml << 'EOF'
-      steps:
-        - label: ":test_tube: Deploy to Staging"
-          command: |
-            echo "Deploying to staging environment..."
-            echo "- Syncing code to staging servers"
-            echo "- Running database migrations"
-            sleep 2
-            echo "Staging deployment complete!"
-            buildkite-agent meta-data set "final-state" "deployed-staging"
-            
-        - label: ":mag: Run Smoke Tests"
-          command: |
-            echo "Running staging smoke tests..."
-            echo "- API endpoints: OK"
-            echo "- UI rendering: OK"  
-            echo "- Database connectivity: OK"
-            buildkite-agent annotate "✅ Staging deployment completed!" --style "info" --context "release-status"
-      EOF
-          ;;
-          
-        "abandon")
-          cat > release-pipeline.yml << 'EOF'
-      steps:
-        - label: ":x: Abandon Release"
-          command: |
-            echo "Abandoning release..."
-            NOTES=$(buildkite-agent meta-data get "notes" --default "No reason provided")
-            echo "Reason: $NOTES"
-            buildkite-agent meta-data set "final-state" "abandoned"
-            buildkite-agent annotate "❌ Release abandoned. Reason: $NOTES" --style "warning" --context "release-status"
-      EOF
-          ;;
-          
-        "schedule")
-          cat > release-pipeline.yml << 'EOF'
-      steps:
-        - label: ":clock1: Schedule Release"
-          command: |
-            echo "Scheduling release for later..."
-            NOTES=$(buildkite-agent meta-data get "notes" --default "No schedule provided")
-            echo "Schedule details: $NOTES"
-            buildkite-agent meta-data set "final-state" "scheduled"
-            buildkite-agent annotate "🕐 Release scheduled. Details: $NOTES" --style "info" --context "release-status"
-            echo "TODO: Create scheduled pipeline trigger"
-      EOF
-          ;;
-      esac
+      if [ -z "$ACTION" ]; then
+        echo "ERROR: Action is empty!"
+        echo "Available metadata:"
+        buildkite-agent meta-data list
+        exit 1
+      fi
       
       echo "--- :rocket: Uploading release pipeline"
-      cat release-pipeline.yml
       buildkite-agent pipeline upload release-pipeline.yml
-
-  # Step 4: Wait for chosen path to complete
-  - wait: ~
-    continue_on_failure: true
-
-  # Step 5: Final summary
-  - label: ":clipboard: Release Summary"
-    command: |
-      echo "--- :memo: Final Release Report"
-      
-      ACTION=$(buildkite-agent meta-data get "action" --default "unknown")
-      FINAL_STATE=$(buildkite-agent meta-data get "final-state" --default "unknown")
-      NOTES=$(buildkite-agent meta-data get "notes" --default "No notes")
-      
-      cat << EOF
-      ========================================
-      RELEASE SUMMARY
-      ========================================
-      Build:       #$BUILDKITE_BUILD_NUMBER
-      Commit:      $BUILDKITE_COMMIT
-      Branch:      $BUILDKITE_BRANCH
-      
-      Decision:    $ACTION
-      Final State: $FINAL_STATE
-      Notes:       $NOTES
-      ========================================
-      EOF
-      
-      # Set final build annotation
-      EMOJI=""
-      case "$FINAL_STATE" in
-        "deployed-production") EMOJI="🚀" ;;
-        "deployed-staging") EMOJI="🧪" ;;
-        "abandoned") EMOJI="❌" ;;
-        "scheduled") EMOJI="🕐" ;;
-        *) EMOJI="❓" ;;
-      esac
-      
-      buildkite-agent annotate "## $EMOJI Release Process Complete
-      
-      **Final State:** \`$FINAL_STATE\`
-      **Decision:** \`$ACTION\`
-      **Notes:** $NOTES" --style "success" --context "final-summary"

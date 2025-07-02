@@ -1,0 +1,120 @@
+steps:
+  # Single step that handles all deployment options
+  - label: ":gear: Execute Release Action"
+    command: |
+      ACTION=$(buildkite-agent meta-data get "action")
+      NOTES=$(buildkite-agent meta-data get "notes" --default "No notes provided")
+      
+      echo "--- :mag: Executing action: $ACTION"
+      echo "Notes: $NOTES"
+      
+      case "$ACTION" in
+        "deploy-prod")
+          echo "--- :shield: Production Pre-checks"
+          echo "Running production safety checks..."
+          echo "- Checking database migrations"
+          echo "- Verifying rollback plan"
+          echo "- Confirming monitoring alerts"
+          sleep 2
+          echo "All checks passed!"
+          
+          echo "--- :rocket: Deploy to Production"
+          echo "Deploying to production environment..."
+          echo "- Updating load balancer"
+          echo "- Rolling deployment to servers"
+          echo "- Verifying health checks"
+          sleep 3
+          echo "Production deployment successful!"
+          
+          echo "--- :chart_with_upwards_trend: Monitor Production"
+          echo "Monitoring production metrics..."
+          echo "- CPU usage: Normal"
+          echo "- Error rate: 0.01%"
+          echo "- Response time: 145ms"
+          
+          buildkite-agent meta-data set "final-state" "deployed-production"
+          buildkite-agent annotate "✅ Production deployment completed successfully!" --style "success" --context "release-status"
+          ;;
+          
+        "deploy-staging")
+          echo "--- :test_tube: Deploy to Staging"
+          echo "Deploying to staging environment..."
+          echo "- Syncing code to staging servers"
+          echo "- Running database migrations"
+          sleep 2
+          echo "Staging deployment complete!"
+          
+          echo "--- :mag: Run Smoke Tests"
+          echo "Running staging smoke tests..."
+          echo "- API endpoints: OK"
+          echo "- UI rendering: OK"  
+          echo "- Database connectivity: OK"
+          
+          buildkite-agent meta-data set "final-state" "deployed-staging"
+          buildkite-agent annotate "✅ Staging deployment completed!" --style "info" --context "release-status"
+          ;;
+          
+        "abandon")
+          echo "--- :x: Abandon Release"
+          echo "Abandoning release..."
+          echo "Reason: $NOTES"
+          buildkite-agent meta-data set "final-state" "abandoned"
+          buildkite-agent annotate "❌ Release abandoned. Reason: $NOTES" --style "warning" --context "release-status"
+          ;;
+          
+        "schedule")
+          echo "--- :clock1: Schedule Release"
+          echo "Scheduling release for later..."
+          echo "Schedule details: $NOTES"
+          buildkite-agent meta-data set "final-state" "scheduled"
+          buildkite-agent annotate "🕐 Release scheduled. Details: $NOTES" --style "info" --context "release-status"
+          echo "TODO: Create scheduled pipeline trigger"
+          ;;
+          
+        *)
+          echo "ERROR: Unknown action: $ACTION"
+          exit 1
+          ;;
+      esac
+
+  # Final summary (always runs)
+  - wait: ~
+    continue_on_failure: true
+
+  - label: ":clipboard: Release Summary"
+    command: |
+      echo "--- :memo: Final Release Report"
+      
+      ACTION=$(buildkite-agent meta-data get "action" --default "unknown")
+      FINAL_STATE=$(buildkite-agent meta-data get "final-state" --default "unknown")
+      NOTES=$(buildkite-agent meta-data get "notes" --default "No notes")
+      
+      cat << EOF
+      ========================================
+      RELEASE SUMMARY
+      ========================================
+      Build:       #$BUILDKITE_BUILD_NUMBER
+      Commit:      $BUILDKITE_COMMIT
+      Branch:      $BUILDKITE_BRANCH
+      
+      Decision:    $ACTION
+      Final State: $FINAL_STATE
+      Notes:       $NOTES
+      ========================================
+      EOF
+      
+      # Set final build annotation
+      EMOJI=""
+      case "$FINAL_STATE" in
+        "deployed-production") EMOJI="🚀" ;;
+        "deployed-staging") EMOJI="🧪" ;;
+        "abandoned") EMOJI="❌" ;;
+        "scheduled") EMOJI="🕐" ;;
+        *) EMOJI="❓" ;;
+      esac
+      
+      buildkite-agent annotate "## $EMOJI Release Process Complete
+
+      **Final State:** \`$FINAL_STATE\`
+      **Decision:** \`$ACTION\`
+      **Notes:** $NOTES" --style "success" --context "final-summary"

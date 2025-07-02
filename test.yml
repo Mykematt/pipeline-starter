@@ -7,7 +7,7 @@ steps:
       echo "Current branch: $BUILDKITE_BRANCH"
       
       # Determine release type based on branch name
-      if [[ "$BUILDKITE_BRANCH" == "main" ]] || [[ "$BUILDKITE_BRANCH" == "master" ]]; then
+      if [[ "$BUILDKITE_BRANCH" == "main" ]]; then
         RELEASE_TYPE="production"
       elif [[ "$BUILDKITE_BRANCH" == "staging" ]]; then
         RELEASE_TYPE="staging"
@@ -15,8 +15,8 @@ steps:
         RELEASE_TYPE="development"
       fi
       
-      echo "--- :label: Setting release type to: $RELEASE_TYPE"
-      buildkite-agent meta-data set "release-type" "$RELEASE_TYPE"
+      echo "--- :label: Setting release type to: $$RELEASE_TYPE"
+      buildkite-agent meta-data set "release-type" "$$RELEASE_TYPE"
 
   # Step 2: Create and upload the appropriate pipeline
   - label: ":pipeline: Load Dynamic Pipeline"

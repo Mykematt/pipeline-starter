@@ -1,0 +1,130 @@
+steps:
+  # Step 1: Determine release type based on branch
+  - label: ":thinking: Determine Release Type"
+    key: "determine-release"
+    command: |
+      echo "--- :mag: Checking branch name"
+      echo "Current branch: $BUILDKITE_BRANCH"
+      
+      # Determine release type based on branch name
+      if [[ "$BUILDKITE_BRANCH" == "main" ]] || [[ "$BUILDKITE_BRANCH" == "master" ]]; then
+        RELEASE_TYPE="production"
+      elif [[ "$BUILDKITE_BRANCH" == "staging" ]]; then
+        RELEASE_TYPE="staging"
+      else
+        RELEASE_TYPE="development"
+      fi
+      
+      echo "--- :label: Setting release type to: $RELEASE_TYPE"
+      buildkite-agent meta-data set "release-type" "$RELEASE_TYPE"
+
+  # Step 2: Create and upload the appropriate pipeline
+  - label: ":pipeline: Load Dynamic Pipeline"
+    depends_on: "determine-release"
+    command: |
+      echo "--- :package: Getting release type"
+      RELEASE_TYPE=$(buildkite-agent meta-data get "release-type")
+      echo "Release type: $RELEASE_TYPE"
+      
+      echo "--- :scroll: Creating dynamic pipeline for $RELEASE_TYPE"
+      
+      # Create the pipeline YAML dynamically based on release type
+      case "$RELEASE_TYPE" in
+        "production")
+          cat > dynamic-pipeline.yml << 'EOF'
+      steps:
+        - label: ":rocket: Production Deployment"
+          command: |
+            echo "--- :package: Preparing production deployment"
+            echo "This is a PRODUCTION deployment!"
+            echo "Would deploy to: production.example.com"
+            
+        - label: ":shield: Production Security Scan"
+          command: |
+            echo "--- :lock: Running security checks"
+            echo "Scanning for vulnerabilities..."
+            sleep 2
+            echo "Security scan passed!"
+            
+        - label: ":white_check_mark: Mark Production Complete"
+          command: |
+            buildkite-agent annotate "✅ Production deployment completed!" --style "success" --context "release-status"
+            buildkite-agent meta-data set "final-state" "deployed-production"
+      EOF
+          ;;
+          
+        "staging")
+          cat > dynamic-pipeline.yml << 'EOF'
+      steps:
+        - label: ":test_tube: Staging Deployment"
+          command: |
+            echo "--- :package: Preparing staging deployment"
+            echo "This is a STAGING deployment!"
+            echo "Would deploy to: staging.example.com"
+            
+        - label: ":mag: Run Integration Tests"
+          command: |
+            echo "--- :test_tube: Running integration tests"
+            echo "Testing API endpoints..."
+            sleep 2
+            echo "All tests passed!"
+            
+        - label: ":white_check_mark: Mark Staging Complete"
+          command: |
+            buildkite-agent annotate "✅ Staging deployment completed!" --style "info" --context "release-status"
+            buildkite-agent meta-data set "final-state" "deployed-staging"
+      EOF
+          ;;
+          
+        *)
+          cat > dynamic-pipeline.yml << 'EOF'
+      steps:
+        - label: ":construction: Development Build"
+          command: |
+            echo "--- :hammer: Building development version"
+            echo "This is a DEVELOPMENT build!"
+            echo "Branch: $BUILDKITE_BRANCH"
+            
+        - label: ":test_tube: Run Unit Tests"
+          command: |
+            echo "--- :test_tube: Running unit tests"
+            echo "Testing components..."
+            sleep 1
+            echo "Tests passed!"
+            
+        - label: ":white_check_mark: Mark Development Complete"
+          command: |
+            buildkite-agent annotate "✅ Development build completed!" --style "warning" --context "release-status"
+            buildkite-agent meta-data set "final-state" "built-development"
+      EOF
+          ;;
+      esac
+      
+      echo "--- :rocket: Uploading dynamic pipeline"
+      cat dynamic-pipeline.yml
+      buildkite-agent pipeline upload dynamic-pipeline.yml
+
+  # Step 3: Wait for dynamic pipeline to complete
+  - wait
+
+  # Step 4: Final summary (always runs)
+  - label: ":memo: Release Summary"
+    command: |
+      echo "--- :clipboard: Final Release Summary"
+      RELEASE_TYPE=$(buildkite-agent meta-data get "release-type" --default "unknown")
+      FINAL_STATE=$(buildkite-agent meta-data get "final-state" --default "unknown")
+      
+      echo "Release Type: $RELEASE_TYPE"
+      echo "Final State: $FINAL_STATE"
+      echo "Branch: $BUILDKITE_BRANCH"
+      echo "Commit: $BUILDKITE_COMMIT"
+      
+      # Create a nice summary annotation
+      cat << EOF | buildkite-agent annotate --style "success" --context "final-summary"
+      ## :tada: Release Process Complete!
+      
+      - **Release Type**: $RELEASE_TYPE
+      - **Final State**: $FINAL_STATE  
+      - **Branch**: $BUILDKITE_BRANCH
+      - **Commit**: \`$BUILDKITE_COMMIT\`
+      EOF

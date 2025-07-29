@@ -1,7 +1,14 @@
+agents:
+  queue: "mac"
 steps:
-  # Simple trigger pipeline
-  - label: ":rocket: Triggering a pipeline"
-    trigger: "demokite"
-    build:
-      message: "Triggered from starter pipeline"
-    key: "trigger"
+  - label: "container"
+    command: "printenv | grep BUILDKITE_TRACING_"
+    plugins:
+      - docker#v5.13.0:
+          image: "ubuntu"
+          propagate-environment: true
+          environment:
+            - BUILDKITE_TRACING_BACKEND
+            - BUILDKITE_TRACING_PROPAGATE_TRACEPARENT
+            - BUILDKITE_TRACING_SERVICE_NAME
+            - BUILDKITE_TRACING_TRACEPARENT

@@ -1,10 +1,23 @@
 agents:
   queue: "mac"
 steps:
+  - label: ":mag: Debug Host Environment"
+    command: |
+      echo "--- Host Environment (All BUILDKITE_ vars)"
+      env | grep BUILDKITE | sort
+      echo "--- Host Environment (All OTEL vars)"
+      env | grep OTEL | sort || echo "No OTEL vars found"
+      echo "--- Host Environment (All tracing vars)"
+      env | grep -i trac | sort || echo "No tracing vars found"
+
   - label: ":docker: Test Tracing Variables"
     command: |
-      echo "--- Container Environment"
-      env | grep -E 'BUILDKITE|OTEL' | sort
+      echo "--- Container Environment (BUILDKITE vars)"
+      env | grep BUILDKITE | sort
+      echo "--- Container Environment (OTEL vars)"
+      env | grep OTEL | sort || echo "No OTEL vars found"
+      echo "--- Container Environment (tracing vars)"
+      env | grep -i trac | sort || echo "No tracing vars found"
     plugins:
       - https://github.com/Mykematt/docker-buildkite-plugin.git:
           image: "alpine:3.18"

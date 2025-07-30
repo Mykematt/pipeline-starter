@@ -1,17 +1,12 @@
 agents:
   queue: "mac"
 steps:
-  - name: ":docker: Test with Explicit Vars"
+  - name: ":docker: Test with propagate-environment"
     command: |
       echo "--- Container Environment"
       env | grep -E 'BUILDKITE|OTEL' | sort
     plugins:
       - docker#v5.12.0:
           image: "alpine:3.18"
-          environment:
-            - BUILDKITE_TRACING_BACKEND=opentelemetry
-            - BUILDKITE_TRACING_SERVICE_NAME=buildkite
-            - BUILDKITE_TRACING_PROPAGATE_TRACEPARENT=true
-            - BUILDKITE_TRACING_TRACEPARENT=00-test-trace-id-01
+          propagate-environment: true
           shell: ["/bin/sh", "-ec"]
-          debug: true

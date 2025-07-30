@@ -1,13 +1,70 @@
 agents:
   queue: "mac"
 steps:
-  - label: ":mag: Host Analysis"
-    command: "env | grep BUILDKITE | wc -l && env | grep BUILDKITE | sort"
+  - label: ":mag: Host Environment Analysis"
+    command: |
+      echo "--- All BUILDKITE_* variables on host (count and list)"
+      echo "Host BUILDKITE_* variable count: $(env | grep -c BUILDKITE)"
+      env | grep BUILDKITE | sort > /tmp/host_buildkite_vars.txt
+      cat /tmp/host_buildkite_vars.txt
+      
+      echo "--- BUILDKITE_ENV_FILE analysis"
+      echo "BUILDKITE_ENV_FILE path: ${BUILDKITE_ENV_FILE:-not_set}"
+      if [[ -f "${BUILDKITE_ENV_FILE:-}" ]]; then
+        echo "BUILDKITE_ENV_FILE contents (BUILDKITE vars only):"
+        grep BUILDKITE "${BUILDKITE_ENV_FILE}" | sort > /tmp/env_file_buildkite_vars.txt
+        cat /tmp/env_file_buildkite_vars.txt
+        echo "ENV_FILE BUILDKITE_* variable count: $(grep -c BUILDKITE "${BUILDKITE_ENV_FILE}" || echo 0)"
+      else
+        echo "BUILDKITE_ENV_FILE not found or not set"
+      fi
 
-  - label: ":docker: Container Analysis"  
-    command: "env | grep BUILDKITE | wc -l && env | grep BUILDKITE | sort"
+  - label: ":docker: Container Environment Analysis"
+    command: |
+      echo "--- BUILDKITE_* variables in container (count and list)"
+      echo "Container BUILDKITE_* variable count: $(env | grep -c BUILDKITE)"
+      env | grep BUILDKITE | sort > /tmp/container_buildkite_vars.txt
+      cat /tmp/container_buildkite_vars.txt
     plugins:
       - https://github.com/Mykematt/docker-buildkite-plugin.git:
           image: "alpine:3.18"
           propagate-environment: true
           shell: ["/bin/sh", "-ec"]
+
+  - label: ":detective: Variable Diff Analysis"
+    command: |
+      echo "--- Analyzing differences between host and container environments"
+      
+      # Download the files created in previous steps
+      buildkite-agent artifact download /tmp/host_buildkite_vars.txt . --step ":mag: Host Environment Analysis" || echo "Host vars file not found"
+      buildkite-agent artifact download /tmp/env_file_buildkite_vars.txt . --step ":mag: Host Environment Analysis" || echo "ENV file vars not found"  
+      buildkite-agent artifact download /tmp/container_buildkite_vars.txt . --step ":docker: Container Environment Analysis" || echo "Container vars file not found"
+      
+      if [[ -f host_buildkite_vars.txt && -f container_buildkite_vars.txt ]]; then
+        echo "--- Variables MISSING from container (present on host but not in container):"
+        comm -23 <(sort host_buildkite_vars.txt) <(sort container_buildkite_vars.txt) > missing_vars.txt
+        cat missing_vars.txt
+        echo "Missing variable count: $(wc -l < missing_vars.txt)"
+        
+        echo "--- Categorizing missing variables:"
+        echo "🔒 Security-related (tokens, keys, secrets):"
+        grep -E "(TOKEN|KEY|SECRET|PASSWORD)" missing_vars.txt || echo "None found"
+        
+        echo "🖥️  Agent-specific (paths, PIDs, configs):"
+        grep -E "(PATH|PID|CONFIG|BIN)" missing_vars.txt || echo "None found"
+        
+        echo "🔧 Internal/Debug (debug, validation, hooks):"
+        grep -E "(DEBUG|VALIDATION|HOOK|EXPERIMENT)" missing_vars.txt || echo "None found"
+        
+        echo "📡 Network/API (endpoints, sockets):"
+        grep -E "(ENDPOINT|SOCKET|API)" missing_vars.txt || echo "None found"
+        
+        echo "❓ Other missing variables:"
+        grep -vE "(TOKEN|KEY|SECRET|PASSWORD|PATH|PID|CONFIG|BIN|DEBUG|VALIDATION|HOOK|EXPERIMENT|ENDPOINT|SOCKET|API)" missing_vars.txt || echo "None found"
+      else
+        echo "Could not find comparison files"
+      fi
+    artifacts:
+      - "missing_vars.txt"
+      - "host_buildkite_vars.txt" 
+      - "container_buildkite_vars.txt"

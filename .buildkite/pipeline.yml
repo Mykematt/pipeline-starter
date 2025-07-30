@@ -1,55 +1,17 @@
 agents:
   queue: "mac"
 steps:
-  - name: ":docker: Debug Tracing Variables"
+  - name: ":docker: Test with Explicit Vars"
     command: |
-      # This script runs on the host
-      echo "--- [Host] Agent Environment"
-      buildkite-agent get-env | grep -E '^BUILDKITE_' | sort
-      
-      echo -e "\n--- [Host] Docker Plugin Config"
-      echo "propagate-tracing-vars: ${BUILDKITE_PLUGIN_DOCKER_PROPAGATE_TRACING_VARS:-not set}"
-      
-      # Now run the container with our test
-      docker run --rm \
-        --env BUILDKITE_TRACING_BACKEND \
-        --env BUILDKITE_TRACING_PROPAGATE_TRACEPARENT \
-        --env BUILDKITE_TRACING_SERVICE_NAME \
-        --env BUILDKITE_TRACING_TRACEPARENT \
-        alpine:3.18 sh -c '
-          echo -e "\n--- [Container] Environment Variables"
-          env | grep -E "BUILDKITE|OTEL" | sort
-          
-          echo -e "\n--- [Container] Trace Context"
-          if [ -n "$BUILDKITE_TRACING_TRACEPARENT" ]; then
-            echo "✓ Trace context is present"
-            echo "Traceparent: $BUILDKITE_TRACING_TRACEPARENT"
-          else
-            echo "✗ Trace context is missing!"
-          fi
-        '
-      
-      echo -e "\n--- [Host] Docker Plugin Test"
-      # Test with the actual plugin
-      cat <<-'YAML' | buildkite-agent pipeline upload
-        steps:
-          - command: |
-              echo "--- [Plugin] Container Environment"
-              env | grep -E '^BUILDKITE_' | sort
-              echo -e "\n--- [Plugin] Trace Context"
-              if [ -n "$BUILDKITE_TRACING_TRACEPARENT" ]; then
-                echo "✓ Trace context is present"
-                echo "Traceparent: $BUILDKITE_TRACING_TRACEPARENT"
-              else
-                echo "✗ Trace context is missing!"
-              fi
-            plugins:
-              - docker#v5.12.0:
-                  image: "alpine:3.18"
-                  propagate-tracing-vars: true
-                  environment:
-                    - BUILDKITE_TRACING_BACKEND
-                    - BUILDKITE_TRACING_PROPAGATE_TRACEPARENT
-                    - BUILDKITE_TRACING_SERVICE_NAME
-                    - BUILDKITE_TRACING_TRACEPARENT
-      YAML
+      echo "--- Container Environment"
+      env | grep -E 'BUILDKITE|OTEL' | sort
+    plugins:
+      - docker#v5.12.0:
+          image: "alpine:3.18"
+          environment:
+            - BUILDKITE_TRACING_BACKEND=opentelemetry
+            - BUILDKITE_TRACING_SERVICE_NAME=buildkite
+            - BUILDKITE_TRACING_PROPAGATE_TRACEPARENT=true
+            - BUILDKITE_TRACING_TRACEPARENT=00-test-trace-id-01
+          shell: ["/bin/sh", "-ec"]
+          debug: true

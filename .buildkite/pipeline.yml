@@ -1,20 +1,13 @@
 agents:
   queue: "mac"
 steps:
-  - label: ":mag: Debug Host Environment"
-    command: 'echo "--- Host Environment" && env | grep -E "(BUILDKITE|OTEL)" | sort && echo "--- Tracing vars" && env | grep -i trac | sort'
+  - label: ":mag: Host Analysis"
+    command: "env | grep BUILDKITE | wc -l && env | grep BUILDKITE | sort"
 
-  - label: ":docker: Docker Plugin Test"
-    command: 'echo "--- Container Environment" && env | grep BUILDKITE | sort && echo "--- Tracing vars" && env | grep -i trac | sort'
+  - label: ":docker: Container Analysis"  
+    command: "env | grep BUILDKITE | wc -l && env | grep BUILDKITE | sort"
     plugins:
       - https://github.com/Mykematt/docker-buildkite-plugin.git:
           image: "alpine:3.18"
           propagate-environment: true
           shell: ["/bin/sh", "-ec"]
-
-  - label: ":docker: Docker Compose Plugin Test"
-    command: 'echo "--- Container Environment" && env | grep BUILDKITE | sort && echo "--- Tracing vars" && env | grep -i trac | sort'
-    plugins:
-      - https://github.com/Mykematt/docker-compose-buildkite-plugin.git:
-          run: app
-          propagate-environment: true

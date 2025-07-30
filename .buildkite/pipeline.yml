@@ -1,18 +1,20 @@
 agents:
   queue: "mac"
 steps:
-  # Step 1: Uses the default pipeline repo (no plugin needed)
-  - label: "Step 1: Pipeline repo"
-    command: |
-      echo "This step checked out the pipeline repo"
-      echo "Current directory: $(pwd)"
+  - label: ":mag: Debug Host Environment"
+    command: 'echo "--- Host Environment" && env | grep -E "(BUILDKITE|OTEL)" | sort && echo "--- Tracing vars" && env | grep -i trac | sort'
 
-  # Step 2: Uses the plugin to checkout your k8s-test repo
-  - label: "Step 2: k8s-test repo"
-    command: |
-      echo "This step checked out the k8s-test repo"
-      echo "Current directory: $(pwd)"
+  - label: ":docker: Docker Plugin Test"
+    command: 'echo "--- Container Environment" && env | grep BUILDKITE | sort && echo "--- Tracing vars" && env | grep -i trac | sort'
     plugins:
-      - git-ssh-checkout#v0.4.1:
-          repository-url: "git@github.com:Mykematt/k8s-test.git"
-          ssh-secret-key-name: "GIT_SSH_CHECKOUT_PLUGIN_SSH_KEY"
+      - https://github.com/Mykematt/docker-buildkite-plugin.git:
+          image: "alpine:3.18"
+          propagate-environment: true
+          shell: ["/bin/sh", "-ec"]
+
+  - label: ":docker: Docker Compose Plugin Test"
+    command: 'echo "--- Container Environment" && env | grep BUILDKITE | sort && echo "--- Tracing vars" && env | grep -i trac | sort'
+    plugins:
+      - https://github.com/Mykematt/docker-compose-buildkite-plugin.git:
+          run: app
+          propagate-environment: true

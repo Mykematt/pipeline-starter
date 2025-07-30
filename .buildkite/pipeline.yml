@@ -1,12 +1,12 @@
 agents:
   queue: "mac"
 steps:
-  - name: ":docker: Test Tracing Variables"
+  - label: ":docker: Test Tracing Variables"
     command: |
       echo "--- Container Environment"
       env | grep -E 'BUILDKITE|OTEL' | sort
     plugins:
-  - git::https://github.com/Mykematt/docker-buildkite-plugin-test.git#feature/propagate-tracing-vars:
-      image: "alpine:3.18"
-      propagate-environment: true
-      shell: ["/bin/sh", "-ec"]
+      - git::https://github.com/Mykematt/docker-buildkite-plugin-test.git#feature/propagate-tracing-vars:
+          image: "alpine:3.18"
+          propagate-environment: true
+          shell: ["/bin/sh", "-ec"]

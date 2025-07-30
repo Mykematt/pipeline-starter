@@ -1,3 +1,5 @@
+agents:
+  queue: "mac"
 steps:
   - name: ":docker: Debug Tracing Variables"
     command: |

@@ -6,7 +6,7 @@ steps:
       echo "--- Container Environment"
       env | grep -E 'BUILDKITE|OTEL' | sort
     plugins:
-      - Mykematt/docker-buildkite-plugin#feature/propagate-tracing-vars:
+      - Mykematt/docker-buildkite-plugin-test#feature/propagate-tracing-vars:
           image: "alpine:3.18"
           propagate-environment: true
           shell: ["/bin/sh", "-ec"]

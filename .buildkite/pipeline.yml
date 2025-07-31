@@ -71,7 +71,7 @@ steps:
 
   - label: ":docker: Container Environment Analysis (After Fix)"
     plugins:
-      - github.com/Mykematt/docker-buildkite-plugin#sup-4218-add-signing-env-vars:
+      - github.com/Mykematt/docker-buildkite-plugin#sup-4218-signing-vars-fix:
           image: "alpine:3.18"
           propagate-environment: true
     command: |

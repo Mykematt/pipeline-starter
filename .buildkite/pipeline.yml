@@ -12,8 +12,6 @@ steps:
       echo "BUILDKITE_AGENT_JWKS_FILE: $${BUILDKITE_AGENT_JWKS_FILE:-'NOT SET'}"
       echo "BUILDKITE_AGENT_JWKS_KEY_ID: $${BUILDKITE_AGENT_JWKS_KEY_ID:-'NOT SET'}"
       echo "BUILDKITE_AGENT_AWS_KMS_KEY: $${BUILDKITE_AGENT_AWS_KMS_KEY:-'NOT SET'}"
-    agents:
-      queue: "default"
     artifact_paths: "/tmp/host_buildkite_vars.txt"
 
   - label: ":docker: Container Environment Analysis (Before Fix)"
@@ -31,8 +29,6 @@ steps:
       echo "BUILDKITE_AGENT_JWKS_FILE: $${BUILDKITE_AGENT_JWKS_FILE:-'NOT SET'}"
       echo "BUILDKITE_AGENT_JWKS_KEY_ID: $${BUILDKITE_AGENT_JWKS_KEY_ID:-'NOT SET'}"
       echo "BUILDKITE_AGENT_AWS_KMS_KEY: $${BUILDKITE_AGENT_AWS_KMS_KEY:-'NOT SET'}"
-    agents:
-      queue: "default"
     artifact_paths: "/tmp/container_buildkite_vars.txt"
 
   - label: ":detective: Variable Diff Analysis"
@@ -67,8 +63,6 @@ steps:
       else
         echo "Could not find comparison files"
       fi
-    agents:
-      queue: "default"
     artifact_paths: "missing_vars.txt"
 
   - wait: ~
@@ -89,8 +83,6 @@ steps:
       echo "BUILDKITE_AGENT_JWKS_FILE: $${BUILDKITE_AGENT_JWKS_FILE:-'NOT SET'}"
       echo "BUILDKITE_AGENT_JWKS_KEY_ID: $${BUILDKITE_AGENT_JWKS_KEY_ID:-'NOT SET'}"
       echo "BUILDKITE_AGENT_AWS_KMS_KEY: $${BUILDKITE_AGENT_AWS_KMS_KEY:-'NOT SET'}"
-    agents:
-      queue: "default"
     artifact_paths: "/tmp/container_buildkite_vars_after.txt"
 
   - label: ":detective: Before vs After Fix Comparison"
@@ -114,6 +106,4 @@ steps:
       else
         echo "Could not find comparison files"
       fi
-    agents:
-      queue: "default"
     artifact_paths: "added_vars.txt"

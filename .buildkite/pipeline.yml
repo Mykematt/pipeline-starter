@@ -87,18 +87,18 @@ steps:
     artifact_paths: "/tmp/container_buildkite_vars_after.txt"
 
   - label: ":docker: Docker Compose Container Environment Analysis"
-    command: |
-      echo "--- BUILDKITE_* variables in container (count and list)"
-      echo "Container BUILDKITE_* variable count: $(env | grep -c BUILDKITE)"
-      env | grep BUILDKITE | sort > /tmp/container_buildkite_vars_compose.txt
-      cat /tmp/container_buildkite_vars_compose.txt
-  
-      echo "--- Checking for signing variables specifically"
-      echo "BUILDKITE_AGENT_JWKS_FILE: ${BUILDKITE_AGENT_JWKS_FILE:-'NOT SET'}"
-      echo "BUILDKITE_AGENT_JWKS_KEY_ID: ${BUILDKITE_AGENT_JWKS_KEY_ID:-'NOT SET'}"
-      echo "BUILDKITE_AGENT_AWS_KMS_KEY: ${BUILDKITE_AGENT_AWS_KMS_KEY:-'NOT SET'}"
     plugins:
       - https://github.com/Mykematt/docker-compose-buildkite-plugin.git#sup-4218-signing-vars-fix:
           run: app
-        propagate-environment: true
-  artifact_paths: "/tmp/container_buildkite_vars_compose.txt"
+          propagate-environment: true
+    command: |
+      echo "--- BUILDKITE_* variables in container (count and list)"
+      echo "Container BUILDKITE_* variable count: $$(env | grep -c BUILDKITE)"
+      env | grep BUILDKITE | sort > /tmp/container_buildkite_vars_compose.txt
+      cat /tmp/container_buildkite_vars_compose.txt
+
+      echo "--- Checking for signing variables specifically"
+      echo "BUILDKITE_AGENT_JWKS_FILE: $${BUILDKITE_AGENT_JWKS_FILE:-'NOT SET'}"
+      echo "BUILDKITE_AGENT_JWKS_KEY_ID: $${BUILDKITE_AGENT_JWKS_KEY_ID:-'NOT SET'}"
+      echo "BUILDKITE_AGENT_AWS_KMS_KEY: $${BUILDKITE_AGENT_AWS_KMS_KEY:-'NOT SET'}"
+    artifact_paths: "/tmp/container_buildkite_vars_compose.txt"

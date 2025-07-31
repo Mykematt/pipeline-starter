@@ -2,103 +2,30 @@ agents:
   queue: "mac"
   
 steps:
-  - label: ":mag: Host Environment Analysis"
+  - label: ":mag: Host Environment"
     command: |
-      echo "--- All BUILDKITE_* variables on host (count and list)"
-      echo "Host BUILDKITE_* variable count: $$(env | grep -c BUILDKITE)"
-      env | grep BUILDKITE | sort > /tmp/host_buildkite_vars.txt
-      cat /tmp/host_buildkite_vars.txt
+      echo "Host BUILDKITE_* count: $$(env | grep -c BUILDKITE)"
 
-      echo "--- Checking for signing variables specifically"
-      echo "BUILDKITE_AGENT_JWKS_FILE: $${BUILDKITE_AGENT_JWKS_FILE:-'NOT SET'}"
-      echo "BUILDKITE_AGENT_JWKS_KEY_ID: $${BUILDKITE_AGENT_JWKS_KEY_ID:-'NOT SET'}"
-      echo "BUILDKITE_AGENT_AWS_KMS_KEY: $${BUILDKITE_AGENT_AWS_KMS_KEY:-'NOT SET'}"
-    artifact_paths: "/tmp/host_buildkite_vars.txt"
-
-  - label: ":docker: Container Environment Analysis (Before Fix)"
+  - label: ":docker: Before Fix"
     plugins:
       - docker#v5.12.0:
           image: "alpine:3.18"
           propagate-environment: true
     command: |
-      echo "--- BUILDKITE_* variables in container (count and list)"
-      echo "Container BUILDKITE_* variable count: $$(env | grep -c BUILDKITE)"
-      env | grep BUILDKITE | sort > /tmp/container_buildkite_vars.txt
-      cat /tmp/container_buildkite_vars.txt
+      echo "Before fix count: $$(env | grep -c BUILDKITE)"
 
-      echo "--- Checking for signing variables specifically"
-      echo "BUILDKITE_AGENT_JWKS_FILE: $${BUILDKITE_AGENT_JWKS_FILE:-'NOT SET'}"
-      echo "BUILDKITE_AGENT_JWKS_KEY_ID: $${BUILDKITE_AGENT_JWKS_KEY_ID:-'NOT SET'}"
-      echo "BUILDKITE_AGENT_AWS_KMS_KEY: $${BUILDKITE_AGENT_AWS_KMS_KEY:-'NOT SET'}"
-    artifact_paths: "/tmp/container_buildkite_vars.txt"
-
-  - label: ":detective: Variable Diff Analysis"
-    command: |
-      echo "--- Analyzing differences between host and container environments"
-      
-      # Download the files created in previous steps
-      buildkite-agent artifact download /tmp/host_buildkite_vars.txt . --step ":mag: Host Environment Analysis" || echo "Host vars file not found"
-      buildkite-agent artifact download /tmp/container_buildkite_vars.txt . --step ":docker: Container Environment Analysis (Before Fix)" || echo "Container vars file not found"
-
-      if [[ -f host_buildkite_vars.txt && -f container_buildkite_vars.txt ]]; then
-        echo "--- Variables MISSING from container (present on host but not in container):"
-        comm -23 <(sort host_buildkite_vars.txt) <(sort container_buildkite_vars.txt) > missing_vars.txt
-        cat missing_vars.txt
-        echo "Missing variable count: $$(wc -l < missing_vars.txt)"
-        
-        echo "--- Categorizing missing variables:"
-        echo "🔒 Security-related (tokens, keys, secrets):"
-        grep -E "(TOKEN|KEY|SECRET|PASSWORD)" missing_vars.txt || echo "None found"
-        
-        echo "🖥️  Agent-specific (paths, PIDs, configs):"
-        grep -E "(PATH|PID|CONFIG|BIN)" missing_vars.txt || echo "None found"
-        
-        echo "🔧 Internal/Debug (debug, validation, hooks):"
-        grep -E "(DEBUG|VALIDATION|HOOK|EXPERIMENT)" missing_vars.txt || echo "None found"
-        
-        echo "📡 Network/API (endpoints, sockets):"
-        grep -E "(ENDPOINT|SOCKET|API)" missing_vars.txt || echo "None found"
-        
-        echo "❓ Other missing variables:"
-        grep -vE "(TOKEN|KEY|SECRET|PASSWORD|PATH|PID|CONFIG|BIN|DEBUG|VALIDATION|HOOK|EXPERIMENT|ENDPOINT|SOCKET|API)" missing_vars.txt || echo "None found"
-      else
-        echo "Could not find comparison files"
-      fi
-    artifact_paths: "missing_vars.txt"
-
-  - wait: ~
-    continue_on_failure: true
-
-  - label: ":docker: Container Environment Analysis (After Fix)"
+  - label: ":docker: After Fix"
     plugins:
       - github.com/Mykematt/docker-buildkite-plugin#sup-4218-signing-vars-fix:
           image: "alpine:3.18"
           propagate-environment: true
     command: |
-      echo "--- BUILDKITE_* variables in container (count and list) - AFTER FIX"
-      echo "Container BUILDKITE_* variable count: $$(env | grep -c BUILDKITE)"
-      env | grep BUILDKITE | sort > /tmp/container_buildkite_vars_after.txt
-      cat /tmp/container_buildkite_vars_after.txt
+      echo "After fix count: $$(env | grep -c BUILDKITE)"
 
-      echo "--- Checking for signing variables specifically - AFTER FIX"
-      echo "BUILDKITE_AGENT_JWKS_FILE: $${BUILDKITE_AGENT_JWKS_FILE:-'NOT SET'}"
-      echo "BUILDKITE_AGENT_JWKS_KEY_ID: $${BUILDKITE_AGENT_JWKS_KEY_ID:-'NOT SET'}"
-      echo "BUILDKITE_AGENT_AWS_KMS_KEY: $${BUILDKITE_AGENT_AWS_KMS_KEY:-'NOT SET'}"
-    artifact_paths: "/tmp/container_buildkite_vars_after.txt"
-
-  - label: ":docker: Docker Compose Container Environment Analysis"
+  - label: ":docker: Docker Compose Fix"
     plugins:
-      - https://github.com/Mykematt/docker-compose-buildkite-plugin.git#sup-4218-signing-vars-fix:
+      - github.com/Mykematt/docker-compose-buildkite-plugin#sup-4218-signing-vars-fix:
           run: app
           propagate-environment: true
     command: |
-      echo "--- BUILDKITE_* variables in container (count and list)"
-      echo "Container BUILDKITE_* variable count: $$(env | grep -c BUILDKITE)"
-      env | grep BUILDKITE | sort > /tmp/container_buildkite_vars_compose.txt
-      cat /tmp/container_buildkite_vars_compose.txt
-
-      echo "--- Checking for signing variables specifically"
-      echo "BUILDKITE_AGENT_JWKS_FILE: $${BUILDKITE_AGENT_JWKS_FILE:-'NOT SET'}"
-      echo "BUILDKITE_AGENT_JWKS_KEY_ID: $${BUILDKITE_AGENT_JWKS_KEY_ID:-'NOT SET'}"
-      echo "BUILDKITE_AGENT_AWS_KMS_KEY: $${BUILDKITE_AGENT_AWS_KMS_KEY:-'NOT SET'}"
-    artifact_paths: "/tmp/container_buildkite_vars_compose.txt"
+      echo "Docker Compose count: $$(env | grep -c BUILDKITE)"

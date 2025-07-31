@@ -16,7 +16,7 @@ steps:
 
   - label: ":docker: After Fix"
     plugins:
-      - github.com/Mykematt/docker-buildkite-plugin#sup-4218-signing-vars-fix:
+      - github.com/Mykematt/docker-buildkite-plugin#b528bec:
           image: "alpine:3.18"
           propagate-environment: true
     command: |
@@ -24,7 +24,8 @@ steps:
 
   - label: ":docker: Docker Compose Fix"
     plugins:
-      - github.com/Mykematt/docker-compose-buildkite-plugin#sup-4218-signing-vars-fix:
+      - github.com/Mykematt/docker-compose-buildkite-plugin#87f8e89:
+          config: docker-compose.yml
           run: app
           propagate-environment: true
     command: |

@@ -86,25 +86,19 @@ steps:
       echo "BUILDKITE_AGENT_AWS_KMS_KEY: $${BUILDKITE_AGENT_AWS_KMS_KEY:-'NOT SET'}"
     artifact_paths: "/tmp/container_buildkite_vars_after.txt"
 
-  - label: ":detective: Before vs After Fix Comparison"
+  - label: ":docker: Docker Compose Container Environment Analysis"
     command: |
-      echo "--- Comparing before and after fix"
-      
-      # Download artifacts from both container tests
-      buildkite-agent artifact download /tmp/container_buildkite_vars.txt . --step ":docker: Container Environment Analysis (Before Fix)" || echo "Before vars file not found"
-      buildkite-agent artifact download /tmp/container_buildkite_vars_after.txt . --step ":docker: Container Environment Analysis (After Fix)" || echo "After vars file not found"
-
-      if [[ -f container_buildkite_vars.txt && -f container_buildkite_vars_after.txt ]]; then
-        echo "--- Variables ADDED by the fix:"
-        comm -13 <(sort container_buildkite_vars.txt) <(sort container_buildkite_vars_after.txt) > added_vars.txt
-        cat added_vars.txt
-        echo "Added variable count: $$(wc -l < added_vars.txt)"
-        
-        echo "--- Summary:"
-        echo "Before fix: $$(wc -l < container_buildkite_vars.txt) variables"
-        echo "After fix: $$(wc -l < container_buildkite_vars_after.txt) variables"
-        echo "Improvement: $$(wc -l < added_vars.txt) new variables"
-      else
-        echo "Could not find comparison files"
-      fi
-    artifact_paths: "added_vars.txt"
+      echo "--- BUILDKITE_* variables in container (count and list)"
+      echo "Container BUILDKITE_* variable count: $(env | grep -c BUILDKITE)"
+      env | grep BUILDKITE | sort > /tmp/container_buildkite_vars_compose.txt
+      cat /tmp/container_buildkite_vars_compose.txt
+  
+      echo "--- Checking for signing variables specifically"
+      echo "BUILDKITE_AGENT_JWKS_FILE: ${BUILDKITE_AGENT_JWKS_FILE:-'NOT SET'}"
+      echo "BUILDKITE_AGENT_JWKS_KEY_ID: ${BUILDKITE_AGENT_JWKS_KEY_ID:-'NOT SET'}"
+      echo "BUILDKITE_AGENT_AWS_KMS_KEY: ${BUILDKITE_AGENT_AWS_KMS_KEY:-'NOT SET'}"
+    plugins:
+      - https://github.com/Mykematt/docker-compose-buildkite-plugin.git#sup-4218-signing-vars-fix:
+          run: app
+        propagate-environment: true
+  artifact_paths: "/tmp/container_buildkite_vars_compose.txt"

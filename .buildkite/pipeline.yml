@@ -2,75 +2,25 @@ agents:
   queue: "mac"
   
 steps:
-  - label: ":mag: Host Environment"
+  - label: "Test Environment Variable Re-hydration"
     command: |
-      echo "=== Host Environment Variables ==="
-      echo "Host BUILDKITE_* count: $$(env | grep -c BUILDKITE)"
-      echo
-      echo "🔍 Pinterest OTEL Tracing Variables on Host:"
-      echo "BUILDKITE_TRACING_BACKEND: $$BUILDKITE_TRACING_BACKEND"
-      echo "BUILDKITE_TRACING_SERVICE_NAME: $$BUILDKITE_TRACING_SERVICE_NAME"
-      echo "BUILDKITE_TRACE_CONTEXT_ENCODING: $$BUILDKITE_TRACE_CONTEXT_ENCODING"
-
-  - label: ":docker: Docker Plugin Test (Standard v5.11.0)"
-    plugins:
-      - docker#v5.11.0:
-          image: "alpine:3.18"
-          propagate-environment: true
-    command: |
-      echo "=== Testing Standard Docker Plugin ==="
-      echo "Docker container BUILDKITE_* count: $$(env | grep -c BUILDKITE)"
-      echo
-      echo "🔍 Pinterest OTEL Tracing Variables in Container:"
-      echo "BUILDKITE_TRACING_BACKEND: $$BUILDKITE_TRACING_BACKEND"
-      echo "BUILDKITE_TRACING_SERVICE_NAME: $$BUILDKITE_TRACING_SERVICE_NAME"
-      echo "BUILDKITE_TRACE_CONTEXT_ENCODING: $$BUILDKITE_TRACE_CONTEXT_ENCODING"
-      echo "BUILDKITE_TRACING_PROPAGATE_TRACEPARENT: $$BUILDKITE_TRACING_PROPAGATE_TRACEPARENT"
-      echo
-      echo "🔍 Agent Config Variables:"
-      echo "BUILDKITE_GIT_CHECKOUT_FLAGS: $$BUILDKITE_GIT_CHECKOUT_FLAGS"
-      echo "BUILDKITE_GIT_CLONE_FLAGS: $$BUILDKITE_GIT_CLONE_FLAGS"
-      echo "BUILDKITE_SHELL: $$BUILDKITE_SHELL"
-      echo "BUILDKITE_PLUGINS_ENABLED: $$BUILDKITE_PLUGINS_ENABLED"
-
-  - label: ":docker: Docker Compose Plugin Test (Standard v4.16.0)"
-    plugins:
-      - docker-compose#v4.16.0:
-          config: docker-compose.yml
-          run: app
-          propagate-environment: true
-    command: |
-      echo "=== Testing Standard Docker Compose Plugin ==="
-      echo "Docker Compose container BUILDKITE_* count: $$(env | grep -c BUILDKITE)"
-      echo
-      echo "🔍 Pinterest OTEL Tracing Variables in Container:"
-      echo "BUILDKITE_TRACING_BACKEND: $$BUILDKITE_TRACING_BACKEND"
-      echo "BUILDKITE_TRACING_SERVICE_NAME: $$BUILDKITE_TRACING_SERVICE_NAME"
-      echo "BUILDKITE_TRACE_CONTEXT_ENCODING: $$BUILDKITE_TRACE_CONTEXT_ENCODING"
-      echo "BUILDKITE_TRACING_PROPAGATE_TRACEPARENT: $$BUILDKITE_TRACING_PROPAGATE_TRACEPARENT"
-      echo
-      echo "🔍 Agent Config Variables:"
-      echo "BUILDKITE_GIT_CHECKOUT_FLAGS: $$BUILDKITE_GIT_CHECKOUT_FLAGS"
-      echo "BUILDKITE_GIT_CLONE_FLAGS: $$BUILDKITE_GIT_CLONE_FLAGS"
-      echo "BUILDKITE_SHELL: $$BUILDKITE_SHELL"
-      echo "BUILDKITE_PLUGINS_ENABLED: $$BUILDKITE_PLUGINS_ENABLED"
-      echo
-      echo "🎉 SUCCESS: Agent modification works with Docker Compose!"
-
-  - label: ":page_facing_up: Environment File Inspection"
-    command: |
-      echo "=== Inspecting Environment File ==="
-      echo "📄 BUILDKITE_ENV_FILE: $$BUILDKITE_ENV_FILE"
-      echo
-      if [[ -f "$$BUILDKITE_ENV_FILE" ]]; then
-        echo "✅ Environment file exists!"
-        echo "📊 Environment file size: $$(wc -l < "$$BUILDKITE_ENV_FILE") lines"
-        echo
-        echo "🔍 Mixed format verification - Names-only variables:"
-        grep -E "^BUILDKITE_(GIT_|TRACING_|SHELL|PLUGIN_|CANCEL_|SIGNAL_)" "$$BUILDKITE_ENV_FILE" | head -10
-        echo
-        echo "🔍 Key=value variables:"
-        grep -E "^BUILDKITE_[A-Z_]+=.*" "$$BUILDKITE_ENV_FILE" | head -5
+      echo "=== Initial Environment Check ==="
+      echo "Build Number: $BUILDKITE_BUILD_NUMBER"
+      echo "Job ID: $BUILDKITE_JOB_ID"
+      echo "Pull Request: $BUILDKITE_PULL_REQUEST"
+      echo "Pull Request Base Branch: $BUILDKITE_PULL_REQUEST_BASE_BRANCH"
+      echo "Build Created At: $BUILDKITE_BUILD_CREATED_AT"
+      
+      # Log all environment variables for comparison
+      echo "=== All Environment Variables ==="
+      env | grep BUILDKITE | sort
+      
+      # Simulate work and then fail on first run
+      if [[ ! -f "/tmp/retry_test_marker" ]]; then
+        echo "First run - creating marker file and failing"
+        touch /tmp/retry_test_marker
+        exit 1
       else
-        echo "❌ Environment file not found!"
+        echo "Retry run - job should pass now"
+        exit 0
       fi

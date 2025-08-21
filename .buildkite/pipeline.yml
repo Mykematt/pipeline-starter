@@ -1,6 +1,5 @@
 agents:
   queue: "mac"
-  
 steps:
   - label: "Test Environment Variable Re-hydration"
     command: |

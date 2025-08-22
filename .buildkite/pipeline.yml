@@ -6,11 +6,11 @@ steps:
       - docker#v5.11.0:
           image: "alpine:3.18"
           propagate-environment: true
-          command: printenv | grep "^BUILDKITE_TRACING_\|^BUILDKITE_GIT_"
+          command: ["sh", "-c", "printenv | grep '^BUILDKITE_TRACING_\\|^BUILDKITE_GIT_'"]
       - docker-compose#v4.16.0:
           run: app
           propagate-environment: true
-          command: printenv | grep "^BUILDKITE_TRACING_\|^BUILDKITE_GIT_"
+          command: ["sh", "-c", "printenv | grep '^BUILDKITE_TRACING_\\|^BUILDKITE_GIT_'"]
 
   - label: ":test_tube: Linux (without experiment)"
     agents:
@@ -19,8 +19,8 @@ steps:
       - docker#v5.11.0:
           image: "alpine:3.18"
           propagate-environment: true
-          command: printenv | grep "^BUILDKITE_TRACING_\|^BUILDKITE_GIT_"
+          command: ["sh", "-c", "printenv | grep '^BUILDKITE_TRACING_\\|^BUILDKITE_GIT_'"]
       - docker-compose#v4.16.0:
           run: app
           propagate-environment: true
-          command: printenv | grep "^BUILDKITE_TRACING_\|^BUILDKITE_GIT_"
+          command: ["sh", "-c", "printenv | grep '^BUILDKITE_TRACING_\\|^BUILDKITE_GIT_'"]

@@ -1,26 +1,26 @@
-agents:
-  queue: "mac"
-  
 steps:
-  - label: "Test Environment Variable Re-hydration"
-    command: |
-      echo "=== Initial Environment Check ==="
-      echo "Build Number: $BUILDKITE_BUILD_NUMBER"
-      echo "Job ID: $BUILDKITE_JOB_ID"
-      echo "Pull Request: $BUILDKITE_PULL_REQUEST"
-      echo "Pull Request Base Branch: $BUILDKITE_PULL_REQUEST_BASE_BRANCH"
-      echo "Build Created At: $BUILDKITE_BUILD_CREATED_AT"
-      
-      # Log all environment variables for comparison
-      echo "=== All Environment Variables ==="
-      env | grep BUILDKITE | sort
-      
-      # Simulate work and then fail on first run
-      if [[ ! -f "/tmp/retry_test_marker" ]]; then
-        echo "First run - creating marker file and failing"
-        touch /tmp/retry_test_marker
-        exit 1
-      else
-        echo "Retry run - job should pass now"
-        exit 0
-      fi
+  - label: ":test_tube: Mac (with experiment)"
+    agents:
+      queue: "mac"
+    plugins:
+      - docker#v5.11.0:
+          image: "alpine:3.18"
+          propagate-environment: true
+          command: printenv | grep "^BUILDKITE_TRACING_\|^BUILDKITE_GIT_"
+      - docker-compose#v4.16.0:
+          run: app
+          propagate-environment: true
+          command: printenv | grep "^BUILDKITE_TRACING_\|^BUILDKITE_GIT_"
+
+  - label: ":test_tube: Linux (without experiment)"
+    agents:
+      queue: "linux"
+    plugins:
+      - docker#v5.11.0:
+          image: "alpine:3.18"
+          propagate-environment: true
+          command: printenv | grep "^BUILDKITE_TRACING_\|^BUILDKITE_GIT_"
+      - docker-compose#v4.16.0:
+          run: app
+          propagate-environment: true
+          command: printenv | grep "^BUILDKITE_TRACING_\|^BUILDKITE_GIT_"

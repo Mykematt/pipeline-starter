@@ -1,26 +1,13 @@
 steps:
-  - label: ":test_tube: Mac (with experiment)"
+  - label: ":kubernetes: Test Git Clone Flags"
+    command: |
+      echo "=== Testing checkout container environment ==="
+      echo "BUILDKITE_GIT_CLONE_FLAGS: $BUILDKITE_GIT_CLONE_FLAGS"
+      env | grep BUILDKITE_GIT || echo "No BUILDKITE_GIT variables found"
+      echo "=== Git version and config ==="
+      git --version
+      git config --list | head -10
     agents:
-      queue: "mac"
-    plugins:
-      - docker#v5.11.0:
-          image: "alpine:3.18"
-          propagate-environment: true
-          command: ["sh", "-c", "printenv | grep '^BUILDKITE_TRACING_\\|^BUILDKITE_GIT_' || echo 'No matching environment variables found'"]
-      - docker-compose#v4.16.0:
-          run: app
-          propagate-environment: true
-          command: ["sh", "-c", "printenv | grep '^BUILDKITE_TRACING_\\|^BUILDKITE_GIT_' || echo 'No matching environment variables found'"]
+      queue: "kubernetes"
 
-  - label: ":test_tube: Linux (without experiment)"
-    agents:
-      queue: "linux"
-    plugins:
-      - docker#v5.11.0:
-          image: "alpine:3.18"
-          propagate-environment: true
-          command: ["sh", "-c", "printenv | grep '^BUILDKITE_TRACING_\\|^BUILDKITE_GIT_' || echo 'No matching environment variables found'"]
-      - docker-compose#v4.16.0:
-          run: app
-          propagate-environment: true
-          command: ["sh", "-c", "printenv | grep '^BUILDKITE_TRACING_\\|^BUILDKITE_GIT_' || echo 'No matching environment variables found'"]
+  

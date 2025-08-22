@@ -7,6 +7,11 @@ steps:
       echo "=== Git version and config ==="
       git --version
       git config --list | head -10
+      echo "=== Creating test pod in cluster ==="
+      kubectl create job test-git-flags-$BUILDKITE_BUILD_NUMBER --image=alpine:3.18 -- sh -c "echo 'Git flags test completed'; sleep 5"
+      kubectl wait --for=condition=complete job/test-git-flags-$BUILDKITE_BUILD_NUMBER --timeout=60s
+      kubectl logs job/test-git-flags-$BUILDKITE_BUILD_NUMBER
+      kubectl delete job test-git-flags-$BUILDKITE_BUILD_NUMBER
     agents:
       queue: "kubernetes"
 

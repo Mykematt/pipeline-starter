@@ -1,10 +1,16 @@
 steps:
-  - label: ":docker: Test Docker Plugin (Mac - With Experiment - Build 2)"
+  # Mac tests (WITH experiment flag)
+  - label: ":white_check_mark: Mac - No Plugin"
     command: |
-      echo "=== Testing Docker Plugin with Experiment (Build 2) ==="
-      echo "Agent: $$BUILDKITE_AGENT_NAME"
-      echo "Queue: $$BUILDKITE_AGENT_META_DATA_QUEUE"
-      env | grep BUILDKITE | sort
+      printenv | grep "^BUILDKITE_GIT_" | sort || echo "No BUILDKITE_GIT vars"
+      printenv | grep "^BUILDKITE_TRACING_" | sort || echo "No BUILDKITE_TRACING vars"
+    agents:
+      queue: "mac"
+
+  - label: ":white_check_mark: Mac - Docker Plugin"
+    command: |
+      printenv | grep "^BUILDKITE_GIT_" | sort || echo "No BUILDKITE_GIT vars"
+      printenv | grep "^BUILDKITE_TRACING_" | sort || echo "No BUILDKITE_TRACING vars"
     plugins:
       - docker#v5.11.0:
           image: "alpine:latest"
@@ -12,7 +18,7 @@ steps:
     agents:
       queue: "mac"
 
-  - label: ":docker: Test Docker Compose Plugin (Mac - With Experiment - Build 2)"
+  - label: ":white_check_mark: Mac - Docker Compose Plugin"
     plugins:
       - docker-compose#v4.16.0:
           run: app
@@ -21,80 +27,40 @@ steps:
             - sh
             - -c
             - |
-              echo "=== Docker Compose Plugin Test (Build 2) ==="
-              echo "Git Config Variables:"
               printenv | grep "^BUILDKITE_GIT_" | sort || echo "No BUILDKITE_GIT vars"
-              echo "Tracing Variables:"
               printenv | grep "^BUILDKITE_TRACING_" | sort || echo "No BUILDKITE_TRACING vars"
-              echo "Signing Variables:"
-              printenv | grep "^BUILDKITE_AGENT_" | sort || echo "No BUILDKITE_AGENT vars"
-              echo "Build Config Variables:"
-              printenv | grep -E "^BUILDKITE_COMMAND_EVAL|^BUILDKITE_SHELL|^BUILDKITE_PLUGINS_ENABLED" | sort || echo "No build config vars"
     agents:
       queue: "mac"
 
-  - label: ":test_tube: Mac Test Without Plugin (With Experiment - Build 2)"
+  # Linux tests (NO experiment flag)
+  - label: ":x: Linux - No Plugin"
     command: |
-      echo "=== Mac Test Without Plugin (With Experiment - Build 2) ==="
-      echo "Agent: $BUILDKITE_AGENT_NAME"
-      echo "Queue: $BUILDKITE_AGENT_META_DATA_QUEUE"
-      echo "New variables SHOULD be present (experiment enabled):"
-      env | grep BUILDKITE_GIT || echo "✗ Missing BUILDKITE_GIT vars"
-      env | grep BUILDKITE_TRACING || echo "✗ Missing BUILDKITE_TRACING vars"
-      echo "Pre-existing variables should also be present:"
-      env | grep BUILDKITE_STRICT_SINGLE_HOOKS || echo "✗ Missing BUILDKITE_STRICT_SINGLE_HOOKS"
-      env | grep BUILDKITE_CANCEL_GRACE_PERIOD || echo "✗ Missing BUILDKITE_CANCEL_GRACE_PERIOD"
-    agents:
-      queue: "mac"
-
-  - label: ":control_knobs: Control Test (Linux - No Experiment - Build 2)"
-    command: |
-      echo "=== Control Test (No Experiment - Build 2) ==="
-      echo "Agent: $BUILDKITE_AGENT_NAME"
-      echo "Queue: $BUILDKITE_AGENT_META_DATA_QUEUE"
-      echo "New variables should NOT be present:"
-      env | grep BUILDKITE_GIT || echo "✓ No BUILDKITE_GIT vars (expected)"
-      env | grep BUILDKITE_TRACING || echo "✓ No BUILDKITE_TRACING vars (expected)"
-      echo "Pre-existing variables should be present:"
-      env | grep BUILDKITE_STRICT_SINGLE_HOOKS || echo "✗ Missing BUILDKITE_STRICT_SINGLE_HOOKS"
-      env | grep BUILDKITE_CANCEL_GRACE_PERIOD || echo "✗ Missing BUILDKITE_CANCEL_GRACE_PERIOD"
+      printenv | grep "^BUILDKITE_GIT_" | sort || echo "No BUILDKITE_GIT vars"
+      printenv | grep "^BUILDKITE_TRACING_" | sort || echo "No BUILDKITE_TRACING vars"
     agents:
       queue: "linux"
 
-  - label: ":docker: Control Docker Plugin Test (Linux - No Experiment - Build 2)"
+  - label: ":x: Linux - Docker Plugin"
+    command: |
+      printenv | grep "^BUILDKITE_GIT_" | sort || echo "No BUILDKITE_GIT vars"
+      printenv | grep "^BUILDKITE_TRACING_" | sort || echo "No BUILDKITE_TRACING vars"
     plugins:
       - docker#v5.11.0:
           image: "alpine:latest"
           propagate-environment: true
-          command:
-            - sh
-            - -c
-            - |
-              echo "=== Control Docker Plugin Test (Build 2) ==="
-              echo "New variables should NOT be propagated:"
-              printenv | grep "^BUILDKITE_GIT_" | sort || echo "✓ No BUILDKITE_GIT vars (expected)"
-              printenv | grep "^BUILDKITE_TRACING_" | sort || echo "✓ No BUILDKITE_TRACING vars (expected)"
-              echo "Pre-existing variables should still be present:"
-              printenv | grep "^BUILDKITE_STRICT_SINGLE_HOOKS" || echo "✗ Missing BUILDKITE_STRICT_SINGLE_HOOKS"
-              printenv | grep "^BUILDKITE_CANCEL_GRACE_PERIOD" || echo "✗ Missing BUILDKITE_CANCEL_GRACE_PERIOD"
     agents:
       queue: "linux"
 
-  - label: ":docker: Control Docker Compose Plugin Test (Linux - No Experiment - Build 2)"
+  - label: ":x: Linux - Docker Compose Plugin"
     plugins:
       - docker-compose#v4.16.0:
           run: app
           propagate-environment: true
-          command:
+          command: 
             - sh
             - -c
             - |
-              echo "=== Control Docker Compose Plugin Test (Build 2) ==="
-              echo "New variables should NOT be propagated:"
-              printenv | grep "^BUILDKITE_GIT_" | sort || echo "✓ No BUILDKITE_GIT vars (expected)"
-              printenv | grep "^BUILDKITE_TRACING_" | sort || echo "✓ No BUILDKITE_TRACING vars (expected)"
-              echo "Pre-existing variables should still be present:"
-              printenv | grep "^BUILDKITE_STRICT_SINGLE_HOOKS" || echo "✗ Missing BUILDKITE_STRICT_SINGLE_HOOKS"
-              printenv | grep "^BUILDKITE_CANCEL_GRACE_PERIOD" || echo "✗ Missing BUILDKITE_CANCEL_GRACE_PERIOD"
+              printenv | grep "^BUILDKITE_GIT_" | sort || echo "No BUILDKITE_GIT vars"
+              printenv | grep "^BUILDKITE_TRACING_" | sort || echo "No BUILDKITE_TRACING vars"
     agents:
       queue: "linux"

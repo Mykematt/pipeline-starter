@@ -1,4 +1,17 @@
 steps:
+  # Artifact Upload Step - Creates test artifacts for download tests
+  - label: ":package: Upload Test Artifacts"
+    command: |
+      echo "Creating test artifacts..."
+      mkdir -p test-artifacts
+      echo "Test file 1 content" > test-artifacts/test1.txt
+      echo "Test file 2 content" > test-artifacts/test2.txt
+      echo "Build info: ${BUILDKITE_BUILD_NUMBER}" > test-artifacts/build-info.txt
+      ls -la test-artifacts/
+    artifact_paths: "test-artifacts/*"
+    agents:
+      queue: "mac"
+
   # Mac tests (WITH experiment flag)
   - label: ":white_check_mark: Mac - Docker Plugin"
     command: |
@@ -10,6 +23,7 @@ steps:
           propagate-environment: true
     agents:
       queue: "mac"
+    depends_on: "upload-test-artifacts"
 
   - label: ":white_check_mark: Mac - Docker Compose Plugin"
     plugins:
@@ -24,18 +38,23 @@ steps:
               printenv | grep "^BUILDKITE_TRACING_" | sort || echo "No BUILDKITE_TRACING vars"
     agents:
       queue: "mac"
+    depends_on: "upload-test-artifacts"
 
   - label: ":white_check_mark: Mac - Artifacts Plugin"
     command: |
       printenv | grep "^BUILDKITE_GIT_" | sort || echo "No BUILDKITE_GIT vars"
       printenv | grep "^BUILDKITE_TRACING_" | sort || echo "No BUILDKITE_TRACING vars"
-      echo "Testing non-Docker plugin with propagate-environment"
+      echo "Testing artifacts plugin with propagate-environment"
+      echo "Downloaded artifacts:"
+      ls -la test-artifacts/ || echo "No artifacts downloaded"
+      cat test-artifacts/build-info.txt || echo "Could not read build info"
     plugins:
       - artifacts#v1.9.4:
-          download: "*"
+          download: "test-artifacts/*"
           propagate-environment: true
     agents:
       queue: "mac"
+    depends_on: "upload-test-artifacts"
 
   # Linux tests (NO experiment flag)
   - label: ":x: Linux - Docker Plugin"
@@ -67,10 +86,14 @@ steps:
     command: |
       printenv | grep "^BUILDKITE_GIT_" | sort || echo "No BUILDKITE_GIT vars"
       printenv | grep "^BUILDKITE_TRACING_" | sort || echo "No BUILDKITE_TRACING vars"
-      echo "Testing non-Docker plugin with propagate-environment"
+      echo "Testing artifacts plugin with propagate-environment"
+      echo "Downloaded artifacts:"
+      ls -la test-artifacts/ || echo "No artifacts downloaded"
+      cat test-artifacts/build-info.txt || echo "Could not read build info"
     plugins:
       - artifacts#v1.9.4:
-          download: "*"
+          download: "test-artifacts/*"
           propagate-environment: true
     agents:
       queue: "linux"
+    depends_on: "upload-test-artifacts"

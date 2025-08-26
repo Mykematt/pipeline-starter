@@ -1,12 +1,5 @@
 steps:
   # Mac tests (WITH experiment flag)
-  - label: ":white_check_mark: Mac - No Plugin"
-    command: |
-      printenv | grep "^BUILDKITE_GIT_" | sort || echo "No BUILDKITE_GIT vars"
-      printenv | grep "^BUILDKITE_TRACING_" | sort || echo "No BUILDKITE_TRACING vars"
-    agents:
-      queue: "mac"
-
   - label: ":white_check_mark: Mac - Docker Plugin"
     command: |
       printenv | grep "^BUILDKITE_GIT_" | sort || echo "No BUILDKITE_GIT vars"
@@ -32,14 +25,19 @@ steps:
     agents:
       queue: "mac"
 
-  # Linux tests (NO experiment flag)
-  - label: ":x: Linux - No Plugin"
+  - label: ":white_check_mark: Mac - Artifacts Plugin"
     command: |
       printenv | grep "^BUILDKITE_GIT_" | sort || echo "No BUILDKITE_GIT vars"
       printenv | grep "^BUILDKITE_TRACING_" | sort || echo "No BUILDKITE_TRACING vars"
+      echo "Testing non-Docker plugin with propagate-environment"
+    plugins:
+      - artifacts#v1.9.4:
+          download: "*"
+          propagate-environment: true
     agents:
-      queue: "linux"
+      queue: "mac"
 
+  # Linux tests (NO experiment flag)
   - label: ":x: Linux - Docker Plugin"
     command: |
       printenv | grep "^BUILDKITE_GIT_" | sort || echo "No BUILDKITE_GIT vars"
@@ -62,5 +60,17 @@ steps:
             - |
               printenv | grep "^BUILDKITE_GIT_" | sort || echo "No BUILDKITE_GIT vars"
               printenv | grep "^BUILDKITE_TRACING_" | sort || echo "No BUILDKITE_TRACING vars"
+    agents:
+      queue: "linux"
+
+  - label: ":x: Linux - Artifacts Plugin"
+    command: |
+      printenv | grep "^BUILDKITE_GIT_" | sort || echo "No BUILDKITE_GIT vars"
+      printenv | grep "^BUILDKITE_TRACING_" | sort || echo "No BUILDKITE_TRACING vars"
+      echo "Testing non-Docker plugin with propagate-environment"
+    plugins:
+      - artifacts#v1.9.4:
+          download: "*"
+          propagate-environment: true
     agents:
       queue: "linux"

@@ -1,6 +1,7 @@
 steps:
   # Artifact Upload Step - Creates test artifacts for download tests
   - label: ":package: Upload Test Artifacts"
+    key: "upload-artifacts"
     command: |
       echo "Creating test artifacts..."
       mkdir -p test-artifacts
@@ -23,7 +24,7 @@ steps:
           propagate-environment: true
     agents:
       queue: "mac"
-    depends_on: "upload-test-artifacts"
+    depends_on: "upload-artifacts"
 
   - label: ":white_check_mark: Mac - Docker Compose Plugin"
     plugins:
@@ -38,7 +39,7 @@ steps:
               printenv | grep "^BUILDKITE_TRACING_" | sort || echo "No BUILDKITE_TRACING vars"
     agents:
       queue: "mac"
-    depends_on: "upload-test-artifacts"
+    depends_on: "upload-artifacts"
 
   - label: ":white_check_mark: Mac - Artifacts Plugin"
     command: |
@@ -54,7 +55,7 @@ steps:
           propagate-environment: true
     agents:
       queue: "mac"
-    depends_on: "upload-test-artifacts"
+    depends_on: "upload-artifacts"
 
   # Linux tests (NO experiment flag)
   - label: ":x: Linux - Docker Plugin"
@@ -96,4 +97,4 @@ steps:
           propagate-environment: true
     agents:
       queue: "linux"
-    depends_on: "upload-test-artifacts"
+    depends_on: "upload-artifacts"

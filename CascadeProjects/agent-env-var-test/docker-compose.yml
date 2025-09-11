@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  app:
+    image: alpine:3.18
+    working_dir: /workdir
+    volumes:
+      - .:/workdir
+    command: sh -c "$$BUILDKITE_COMMAND"

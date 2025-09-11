@@ -1,0 +1,146 @@
+steps:
+  # Docker Plugin Tests
+  - label: ":docker: Docker Plugin - With Experiment (Mac)"
+    key: "docker-with-experiment"
+    agents:
+      queue: "mac"
+    plugins:
+      - docker#v5.11.0:
+          image: "alpine:3.18"
+          propagate-environment: true
+    command: |
+      echo "=== Docker Plugin with Experiment ==="
+      echo "Testing if Docker plugin gets agent config variables..."
+      echo ""
+      echo "Agent config variables:"
+      env | grep -E '^BUILDKITE_(GIT_CHECKOUT_FLAGS|GIT_CLEAN_FLAGS|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED|SHELL)' | sort || echo 'No agent config vars found'
+      echo ""
+      echo "Total BUILDKITE_ variables: $(env | grep '^BUILDKITE_' | wc -l)"
+      echo ""
+      echo "Key variables to check:"
+      echo "BUILDKITE_GIT_CHECKOUT_FLAGS: ${BUILDKITE_GIT_CHECKOUT_FLAGS:-'(not set)'}"
+      echo "BUILDKITE_COMMAND_EVAL: ${BUILDKITE_COMMAND_EVAL:-'(not set)'}"
+      echo "BUILDKITE_LOCAL_HOOKS_ENABLED: ${BUILDKITE_LOCAL_HOOKS_ENABLED:-'(not set)'}"
+      echo "BUILDKITE_PLUGINS_ENABLED: ${BUILDKITE_PLUGINS_ENABLED:-'(not set)'}"
+
+  - label: ":docker: Docker Plugin - Without Experiment (Linux)"
+    key: "docker-without-experiment"
+    agents:
+      queue: "linux"
+    plugins:
+      - docker#v5.11.0:
+          image: "alpine:3.18"
+          propagate-environment: true
+    command: |
+      echo "=== Docker Plugin without Experiment ==="
+      echo "Testing if Docker plugin gets agent config variables..."
+      echo ""
+      echo "Agent config variables:"
+      env | grep -E '^BUILDKITE_(GIT_CHECKOUT_FLAGS|GIT_CLEAN_FLAGS|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED|SHELL)' | sort || echo 'No agent config vars found'
+      echo ""
+      echo "Total BUILDKITE_ variables: $(env | grep '^BUILDKITE_' | wc -l)"
+      echo ""
+      echo "Key variables to check:"
+      echo "BUILDKITE_GIT_CHECKOUT_FLAGS: ${BUILDKITE_GIT_CHECKOUT_FLAGS:-'(not set)'}"
+      echo "BUILDKITE_COMMAND_EVAL: ${BUILDKITE_COMMAND_EVAL:-'(not set)'}"
+      echo "BUILDKITE_LOCAL_HOOKS_ENABLED: ${BUILDKITE_LOCAL_HOOKS_ENABLED:-'(not set)'}"
+      echo "BUILDKITE_PLUGINS_ENABLED: ${BUILDKITE_PLUGINS_ENABLED:-'(not set)'}"
+
+  - label: ":docker: Docker Compose Plugin - With Experiment (Mac)"
+    key: "docker-compose-with-experiment"
+    agents:
+      queue: "mac"
+    plugins:
+      - docker-compose#v4.16.0:
+          config: docker-compose.yml
+          run: app
+          propagate-environment: true
+    command: |
+      echo "=== Docker Compose Plugin with Experiment ==="
+      echo "Testing if Docker Compose plugin gets agent config variables..."
+      echo ""
+      echo "Agent config variables:"
+      env | grep -E '^BUILDKITE_(GIT_CHECKOUT_FLAGS|GIT_CLEAN_FLAGS|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED|SHELL)' | sort || echo 'No agent config vars found'
+      echo ""
+      echo "Total BUILDKITE_ variables: $(env | grep '^BUILDKITE_' | wc -l)"
+      echo ""
+      echo "Key variables to check:"
+      echo "BUILDKITE_GIT_CHECKOUT_FLAGS: ${BUILDKITE_GIT_CHECKOUT_FLAGS:-'(not set)'}"
+      echo "BUILDKITE_COMMAND_EVAL: ${BUILDKITE_COMMAND_EVAL:-'(not set)'}"
+      echo "BUILDKITE_LOCAL_HOOKS_ENABLED: ${BUILDKITE_LOCAL_HOOKS_ENABLED:-'(not set)'}"
+      echo "BUILDKITE_PLUGINS_ENABLED: ${BUILDKITE_PLUGINS_ENABLED:-'(not set)'}"
+
+  - label: ":docker: Docker Compose Plugin - Without Experiment (Linux)"
+    key: "docker-compose-without-experiment"
+    agents:
+      queue: "linux"
+    plugins:
+      - docker-compose#v4.16.0:
+          config: docker-compose.yml
+          run: app
+          propagate-environment: true
+    command: |
+      echo "=== Docker Compose Plugin without Experiment ==="
+      echo "Testing if Docker Compose plugin gets agent config variables..."
+      echo ""
+      echo "Agent config variables:"
+      env | grep -E '^BUILDKITE_(GIT_CHECKOUT_FLAGS|GIT_CLEAN_FLAGS|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED|SHELL)' | sort || echo 'No agent config vars found'
+      echo ""
+      echo "Total BUILDKITE_ variables: $(env | grep '^BUILDKITE_' | wc -l)"
+      echo ""
+      echo "Key variables to check:"
+      echo "BUILDKITE_GIT_CHECKOUT_FLAGS: ${BUILDKITE_GIT_CHECKOUT_FLAGS:-'(not set)'}"
+      echo "BUILDKITE_COMMAND_EVAL: ${BUILDKITE_COMMAND_EVAL:-'(not set)'}"
+      echo "BUILDKITE_LOCAL_HOOKS_ENABLED: ${BUILDKITE_LOCAL_HOOKS_ENABLED:-'(not set)'}"
+      echo "BUILDKITE_PLUGINS_ENABLED: ${BUILDKITE_PLUGINS_ENABLED:-'(not set)'}"
+
+  # Direct Docker Tests using env file (proper test for experiment)
+  - label: ":docker: Direct Docker - With Experiment (Mac)"
+    key: "direct-docker-with-experiment"
+    agents:
+      queue: "mac"
+    command: |
+      echo "=== Testing env file with experiment enabled ==="
+      echo "Contents of BUILDKITE_ENV_FILE:"
+      head -20 "$$BUILDKITE_ENV_FILE"
+      echo ""
+      echo "=== Running container with env file only ==="
+      docker run --rm --env-file "$$BUILDKITE_ENV_FILE" -v "$(pwd):/workdir" -w /workdir alpine:latest sh -c "
+        echo '=== Direct Docker with Experiment Enabled ===';
+        echo 'Agent config variables (should be present):';
+        env | grep -E '^BUILDKITE_(GIT_|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED)' | sort || echo 'No agent config vars found';
+        echo '';
+        echo 'All BUILDKITE_ variables:';
+        env | grep '^BUILDKITE_' | wc -l | xargs echo 'Total count:';
+      "
+
+  - label: ":docker: Direct Docker - Without Experiment (Linux)"
+    key: "direct-docker-without-experiment"
+    agents:
+      queue: "linux"
+    command: |
+      echo "=== Testing env file without experiment ==="
+      echo "Contents of BUILDKITE_ENV_FILE:"
+      head -20 "$$BUILDKITE_ENV_FILE"
+      echo ""
+      echo "=== Running container with env file only ==="
+      docker run --rm --env-file "$$BUILDKITE_ENV_FILE" -v "$(pwd):/workdir" -w /workdir alpine:latest sh -c "
+        echo '=== Direct Docker without Experiment ===';
+        echo 'Agent config variables (should be absent):';
+        env | grep -E '^BUILDKITE_(GIT_|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED)' | sort || echo 'No agent config vars found';
+        echo '';
+        echo 'All BUILDKITE_ variables:';
+        env | grep '^BUILDKITE_' | wc -l | xargs echo 'Total count:';
+      "
+
+  # Summary step
+  - label: "📊 Test Summary"
+    key: "summary"
+    depends_on:
+      - "docker-with-experiment"
+      - "docker-without-experiment" 
+      - "direct-docker-with-experiment"
+      - "direct-docker-without-experiment"
+    command: |
+      echo "=== Test Summary ==="
+      echo "Compare the BUILDKITE_* variables above between Mac (with experiment) and Linux (without experiment) queues."

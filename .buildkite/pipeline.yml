@@ -17,7 +17,8 @@ steps:
           propagate-environment: true
     command: |
       echo "=== Docker Plugin with Experiment ==="
-      env | grep -E '^BUILDKITE_(GIT_CHECKOUT_FLAGS|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED|SHELL)' | sort || echo 'No agent config vars found'
+      echo "Agent config vars from experiment list:"
+      env | grep -E '^BUILDKITE_(GIT_CHECKOUT_FLAGS|GIT_CLEAN_FLAGS|GIT_CLONE_FLAGS|GIT_MIRRORS_|CANCEL_GRACE_PERIOD|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED|REDACTED_VARS|SHELL|SIGNAL_GRACE_PERIOD|SSH_KEYSCAN|STRICT_SINGLE_HOOKS|TRACE_|TRACING_|AGENT_AWS_KMS_KEY|AGENT_JWKS_)' | sort || echo 'No experiment agent config vars found'
       echo "Total BUILDKITE_ vars: $(env | grep '^BUILDKITE_' | wc -l)"
 
   - label: ":docker: Docker Plugin - Without Experiment (Linux)"
@@ -30,7 +31,8 @@ steps:
           propagate-environment: true
     command: |
       echo "=== Docker Plugin without Experiment ==="
-      env | grep -E '^BUILDKITE_(GIT_CHECKOUT_FLAGS|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED|SHELL)' | sort || echo 'No agent config vars found'
+      echo "Agent config vars from experiment list:"
+      env | grep -E '^BUILDKITE_(GIT_CHECKOUT_FLAGS|GIT_CLEAN_FLAGS|GIT_CLONE_FLAGS|GIT_MIRRORS_|CANCEL_GRACE_PERIOD|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED|REDACTED_VARS|SHELL|SIGNAL_GRACE_PERIOD|SSH_KEYSCAN|STRICT_SINGLE_HOOKS|TRACE_|TRACING_|AGENT_AWS_KMS_KEY|AGENT_JWKS_)' | sort || echo 'No experiment agent config vars found'
       echo "Total BUILDKITE_ vars: $(env | grep '^BUILDKITE_' | wc -l)"
 
   - label: ":docker: Docker Compose Plugin - With Experiment (Mac)"
@@ -44,7 +46,8 @@ steps:
           propagate-environment: true
     command: |
       echo "=== Docker Compose Plugin with Experiment ==="
-      env | grep -E '^BUILDKITE_(GIT_CHECKOUT_FLAGS|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED|SHELL)' | sort || echo 'No agent config vars found'
+      echo "Agent config vars from experiment list:"
+      env | grep -E '^BUILDKITE_(GIT_CHECKOUT_FLAGS|GIT_CLEAN_FLAGS|GIT_CLONE_FLAGS|GIT_MIRRORS_|CANCEL_GRACE_PERIOD|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED|REDACTED_VARS|SHELL|SIGNAL_GRACE_PERIOD|SSH_KEYSCAN|STRICT_SINGLE_HOOKS|TRACE_|TRACING_|AGENT_AWS_KMS_KEY|AGENT_JWKS_)' | sort || echo 'No experiment agent config vars found'
       echo "Total BUILDKITE_ vars: $(env | grep '^BUILDKITE_' | wc -l)"
 
   - label: ":docker: Docker Compose Plugin - Without Experiment (Linux)"
@@ -58,7 +61,8 @@ steps:
           propagate-environment: true
     command: |
       echo "=== Docker Compose Plugin without Experiment ==="
-      env | grep -E '^BUILDKITE_(GIT_CHECKOUT_FLAGS|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED|SHELL)' | sort || echo 'No agent config vars found'
+      echo "Agent config vars from experiment list:"
+      env | grep -E '^BUILDKITE_(GIT_CHECKOUT_FLAGS|GIT_CLEAN_FLAGS|GIT_CLONE_FLAGS|GIT_MIRRORS_|CANCEL_GRACE_PERIOD|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED|REDACTED_VARS|SHELL|SIGNAL_GRACE_PERIOD|SSH_KEYSCAN|STRICT_SINGLE_HOOKS|TRACE_|TRACING_|AGENT_AWS_KMS_KEY|AGENT_JWKS_)' | sort || echo 'No experiment agent config vars found'
       echo "Total BUILDKITE_ vars: $(env | grep '^BUILDKITE_' | wc -l)"
 
   # Summary step
@@ -72,4 +76,4 @@ steps:
     command: |
       echo "=== Test Summary ==="
       echo "Compare the agent config variables above between Mac (with experiment) and Linux (without experiment) queues."
-      echo "Expected: Mac should show the agent config variables, Linux should not."
+      echo "Expected: Mac (with experiment) should show agent config vars, Linux (without experiment) should not."

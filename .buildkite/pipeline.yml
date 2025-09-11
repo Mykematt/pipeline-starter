@@ -1,15 +1,3 @@
-env:
-  BUILDKITE_GIT_CHECKOUT_FLAGS: "-f"
-  BUILDKITE_GIT_CLEAN_FLAGS: "-ffdx"
-  BUILDKITE_COMMAND_EVAL: "true"
-  BUILDKITE_LOCAL_HOOKS_ENABLED: "false"
-  BUILDKITE_PLUGINS_ENABLED: "true"
-  BUILDKITE_SHELL: "/bin/bash"
-  # Set some variables that should only propagate with experiment
-  BUILDKITE_TRACING_BACKEND: "test-backend"
-  BUILDKITE_AGENT_AWS_KMS_KEY: "test-kms-key"
-  BUILDKITE_SSH_KEYSCAN: "false"
-
 steps:
   - label: ":docker: Docker Plugin - With Experiment (Mac) + propagate-environment"
     key: docker-with-experiment

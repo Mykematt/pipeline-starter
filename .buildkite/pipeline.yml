@@ -1,103 +1,13 @@
-env:
-  BUILDKITE_GIT_CHECKOUT_FLAGS: "-f"
-  BUILDKITE_GIT_CLEAN_FLAGS: "-ffdx"
-  BUILDKITE_COMMAND_EVAL: "true"
-  BUILDKITE_LOCAL_HOOKS_ENABLED: "false"
-  BUILDKITE_PLUGINS_ENABLED: "true"
-  BUILDKITE_SHELL: "/bin/bash"
-  # Set some variables that should only propagate with experiment
-  BUILDKITE_TRACING_BACKEND: "test-backend"
-  BUILDKITE_AGENT_AWS_KMS_KEY: "test-kms-key"
-  BUILDKITE_SSH_KEYSCAN: "false"
+notify:
+  - webhook: "https://webhook.site/c494b825-a554-4a11-87fe-7f596f06e1c7"
+    if: "build.state == 'passed'"
 
 steps:
-  - label: ":docker: Docker Plugin - With Experiment (Mac) + propagate-environment"
-    key: docker-with-experiment
-    agents:
-      queue: mac
-    plugins:
-      - github.com/buildkite-plugins/docker-buildkite-plugin#v5.11.0:
-          image: alpine:3.18
-          propagate-environment: true
-    command: |
-      echo "=== Docker Plugin WITH Experiment + propagate-environment ==="
-      echo "Should have Josh's 26 experiment variables:"
-      echo "Git variables:"
-      env | grep -E '^BUILDKITE_(GIT_CHECKOUT_FLAGS|GIT_CLEAN_FLAGS|GIT_CLONE_FLAGS|GIT_CLONE_MIRROR_FLAGS|GIT_FETCH_FLAGS|GIT_MIRRORS_LOCK_TIMEOUT|GIT_MIRRORS_PATH|GIT_MIRRORS_SKIP_UPDATE|GIT_SUBMODULES)' | sort || echo 'Missing git vars'
-      echo "Build config variables:"
-      env | grep -E '^BUILDKITE_(CANCEL_GRACE_PERIOD|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED|REDACTED_VARS|SHELL|SIGNAL_GRACE_PERIOD_SECONDS|SSH_KEYSCAN|STRICT_SINGLE_HOOKS)' | sort || echo 'Missing build config vars'
-      echo "Tracing variables:"
-      env | grep -E '^BUILDKITE_(TRACE_CONTEXT_ENCODING|TRACING_BACKEND|TRACING_SERVICE_NAME|TRACING_TRACEPARENT|TRACING_PROPAGATE_TRACEPARENT)' | sort || echo 'Missing tracing vars'
-      echo "Pipeline signing variables:"
-      env | grep -E '^BUILDKITE_(AGENT_AWS_KMS_KEY|AGENT_JWKS_FILE|AGENT_JWKS_KEY_ID)' | sort || echo 'Missing signing vars'
-      echo "Variables NOT in Josh's experiment (should be missing):"
-      env | grep -E '^BUILDKITE_(ANALYTICS_TOKEN|TEST_SUITE_SLUG|LAST_HOOK_EXIT_STATUS|NO_HTTP2|PLUGIN_VALIDATION|REQUEST_HEADER_)' | sort || echo 'Correctly missing - not in experiment'
-      echo "Total BUILDKITE_ vars: $(env | grep '^BUILDKITE_' | wc -l)"
+- label: "Step 1 - Build"
+  key: "build-step"
+  command: "echo 'Building...' && sleep 5"
 
-  - label: ":docker: Docker Plugin - Without Experiment (Linux) + propagate-environment"
-    key: docker-without-experiment
-    agents:
-      queue: linux
-    plugins:
-      - github.com/buildkite-plugins/docker-buildkite-plugin#v5.11.0:
-          image: alpine:3.18
-          propagate-environment: true
-    command: |
-      echo "=== Docker Plugin WITHOUT Experiment + propagate-environment ==="
-      echo "Should be MISSING Josh's 26 experiment variables:"
-      echo "Git variables (should be missing):"
-      env | grep -E '^BUILDKITE_(GIT_CHECKOUT_FLAGS|GIT_CLEAN_FLAGS|GIT_CLONE_FLAGS|GIT_CLONE_MIRROR_FLAGS|GIT_FETCH_FLAGS|GIT_MIRRORS_LOCK_TIMEOUT|GIT_MIRRORS_PATH|GIT_MIRRORS_SKIP_UPDATE|GIT_SUBMODULES)' | sort || echo 'Correctly missing git vars'
-      echo "Build config variables (should be missing):"
-      env | grep -E '^BUILDKITE_(CANCEL_GRACE_PERIOD|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED|REDACTED_VARS|SHELL|SIGNAL_GRACE_PERIOD_SECONDS|SSH_KEYSCAN|STRICT_SINGLE_HOOKS)' | sort || echo 'Correctly missing build config vars'
-      echo "Tracing variables (should be missing):"
-      env | grep -E '^BUILDKITE_(TRACE_CONTEXT_ENCODING|TRACING_BACKEND|TRACING_SERVICE_NAME|TRACING_TRACEPARENT|TRACING_PROPAGATE_TRACEPARENT)' | sort || echo 'Correctly missing tracing vars'
-      echo "Pipeline signing variables (should be missing):"
-      env | grep -E '^BUILDKITE_(AGENT_AWS_KMS_KEY|AGENT_JWKS_FILE|AGENT_JWKS_KEY_ID)' | sort || echo 'Correctly missing signing vars'
-      echo "Total BUILDKITE_ vars: $(env | grep '^BUILDKITE_' | wc -l)"
-
-  - label: ":docker-compose: Docker Compose Plugin - With Experiment (Mac) + propagate-environment"
-    key: "docker-compose-with-experiment"
-    agents:
-      queue: "mac"
-    plugins:
-      - docker-compose#v5.3.0:
-          run: app
-          config: docker-compose.yml
-          propagate-environment: true
-    command: |
-      echo "=== Docker Compose Plugin WITH Experiment + propagate-environment ==="
-      echo "Should have Josh's 26 experiment variables:"
-      echo "Git variables:"
-      env | grep -E '^BUILDKITE_(GIT_CHECKOUT_FLAGS|GIT_CLEAN_FLAGS|GIT_CLONE_FLAGS|GIT_CLONE_MIRROR_FLAGS|GIT_FETCH_FLAGS|GIT_MIRRORS_LOCK_TIMEOUT|GIT_MIRRORS_PATH|GIT_MIRRORS_SKIP_UPDATE|GIT_SUBMODULES)' | sort || echo 'Missing git vars'
-      echo "Build config variables:"
-      env | grep -E '^BUILDKITE_(CANCEL_GRACE_PERIOD|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED|REDACTED_VARS|SHELL|SIGNAL_GRACE_PERIOD_SECONDS|SSH_KEYSCAN|STRICT_SINGLE_HOOKS)' | sort || echo 'Missing build config vars'
-      echo "Tracing variables:"
-      env | grep -E '^BUILDKITE_(TRACE_CONTEXT_ENCODING|TRACING_BACKEND|TRACING_SERVICE_NAME|TRACING_TRACEPARENT|TRACING_PROPAGATE_TRACEPARENT)' | sort || echo 'Missing tracing vars'
-      echo "Pipeline signing variables:"
-      env | grep -E '^BUILDKITE_(AGENT_AWS_KMS_KEY|AGENT_JWKS_FILE|AGENT_JWKS_KEY_ID)' | sort || echo 'Missing signing vars'
-      echo "Variables NOT in Josh's experiment (should be missing):"
-      env | grep -E '^BUILDKITE_(ANALYTICS_TOKEN|TEST_SUITE_SLUG|LAST_HOOK_EXIT_STATUS|NO_HTTP2|PLUGIN_VALIDATION|REQUEST_HEADER_)' | sort || echo 'Correctly missing - not in experiment'
-      echo "Total BUILDKITE_ vars: $(env | grep '^BUILDKITE_' | wc -l)"
-
-  - label: ":docker-compose: Docker Compose Plugin - Without Experiment (Linux) + propagate-environment"
-    key: "docker-compose-without-experiment"
-    agents:
-      queue: "linux"
-    plugins:
-      - docker-compose#v5.3.0:
-          run: app
-          config: docker-compose.yml
-          propagate-environment: true
-    command: |
-      echo "=== Docker Compose Plugin WITHOUT Experiment + propagate-environment ==="
-      echo "Should be MISSING Josh's 26 experiment variables:"
-      echo "Git variables (should be missing):"
-      env | grep -E '^BUILDKITE_(GIT_CHECKOUT_FLAGS|GIT_CLEAN_FLAGS|GIT_CLONE_FLAGS|GIT_CLONE_MIRROR_FLAGS|GIT_FETCH_FLAGS|GIT_MIRRORS_LOCK_TIMEOUT|GIT_MIRRORS_PATH|GIT_MIRRORS_SKIP_UPDATE|GIT_SUBMODULES)' | sort || echo 'Correctly missing git vars'
-      echo "Build config variables (should be missing):"
-      env | grep -E '^BUILDKITE_(CANCEL_GRACE_PERIOD|COMMAND_EVAL|LOCAL_HOOKS_ENABLED|PLUGINS_ENABLED|REDACTED_VARS|SHELL|SIGNAL_GRACE_PERIOD_SECONDS|SSH_KEYSCAN|STRICT_SINGLE_HOOKS)' | sort || echo 'Correctly missing build config vars'
-      echo "Tracing variables (should be missing):"
-      env | grep -E '^BUILDKITE_(TRACE_CONTEXT_ENCODING|TRACING_BACKEND|TRACING_SERVICE_NAME|TRACING_TRACEPARENT|TRACING_PROPAGATE_TRACEPARENT)' | sort || echo 'Correctly missing tracing vars'
-      echo "Pipeline signing variables (should be missing):"
-      env | grep -E '^BUILDKITE_(AGENT_AWS_KMS_KEY|AGENT_JWKS_FILE|AGENT_JWKS_KEY_ID)' | sort || echo 'Correctly missing signing vars'
-      echo "Total BUILDKITE_ vars: $(env | grep '^BUILDKITE_' | wc -l)"
-
+- label: "Step 2 - Test" 
+  key: "test-step"
+  command: "echo 'Testing...' && sleep 5"
+  depends_on: "build-step"

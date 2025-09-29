@@ -1,8 +1,22 @@
+env:
+  PIPELINE_SECRET: "pipeline-level-secret"
+
 steps:
-  - label: "Test redaction bug - interpolated"
-    command: echo "This has interpolated secret: $TEST_SECRET"
+  - label: "Broken - interpolated"
+    command: echo "Secret is $MY_SECRET"
     
-  - label: "Test redaction fix - escaped"
-    command: echo "This uses escaped variable: $$TEST_SECRET"
+  - label: "Working - escaped dollar"
+    command: echo "Secret is $$MY_SECRET"
     env:
-      TEST_SECRET: "hvs.CAESIXFXBZW"
+      MY_SECRET: "hvs.CAESIXFXBZW"
+      
+  - label: "Working - hardcoded redacted"
+    command: echo "Secret is [REDACTED]"
+    
+  - label: "Working - no interpolation"
+    command: echo "Secret is $MY_SECRET"
+    env:
+      MY_SECRET: "hvs.CAESIXFXBZW"
+      
+  - label: "Test pipeline level env"
+    command: echo "Pipeline env $PIPELINE_SECRET"

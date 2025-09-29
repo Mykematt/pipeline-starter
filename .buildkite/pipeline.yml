@@ -1,13 +1,8 @@
-notify:
-  - webhook: "https://webhook.site/c494b825-a554-4a11-87fe-7f596f06e1c7"
-    if: "build.state == 'passed'"
-
 steps:
-- label: "Step 1 - Build"
-  key: "build-step"
-  command: "echo 'Building...' && sleep 5"
-
-- label: "Step 2 - Test" 
-  key: "test-step"
-  command: "echo 'Testing...' && sleep 5"
-  depends_on: "build-step"
+  - label: "Test redaction bug - interpolated"
+    command: echo "This has interpolated secret: $TEST_SECRET"
+    
+  - label: "Test redaction fix - escaped"
+    command: echo "This uses escaped variable: $$TEST_SECRET"
+    env:
+      TEST_SECRET: "hvs.CAESIXFXBZW"

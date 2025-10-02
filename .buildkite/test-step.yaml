@@ -1,0 +1,20 @@
+steps:
+  - label: ":rocket: Step that will fail"
+    key: "fail-step"
+    command: |
+      echo "This step will fail intentionally"
+      sleep 3
+      exit 1
+  
+  - wait:
+      continue_on_failure: true
+  
+  - label: ":timer_clock: Long running step (90 seconds)"
+    key: "long-step"
+    command: |
+      echo "Starting long running step..."
+      for i in {1..30}; do
+        echo "Still running... $i/30"
+        sleep 3
+      done
+      echo "Long step completed!"

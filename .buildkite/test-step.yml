@@ -4,8 +4,7 @@ steps:
       TEST_QUEUE_VALUE: "my-test-queue"
     command: |
       echo "=== Testing Environment Variable Approach ==="
-      echo "TEST_QUEUE_VALUE: $TEST_QUEUE_VALUE"
-      echo "BUILDKITE_AGENT_META_DATA_QUEUE: $BUILDKITE_AGENT_META_DATA_QUEUE"
+      echo "runnin-queue: $BUILDKITE_AGENT_META_DATA_QUEUE"
       
       # Create YAML with bash variable substitution (not YAML interpolation)
       cat << EOF > test-step.yml
@@ -13,9 +12,9 @@ steps:
         - label: "📋 Test Step with Queue"
           command: |
             echo "This step should run on my queue"
-            echo "Original queue was: $BUILDKITE_AGENT_META_DATA_QUEUE"
+            echo "Original queue was: $running-queue"
           agents:
-            queue: "$BUILDKITE_AGENT_META_DATA_QUEUE"
+            queue: "$running-queue"
       EOF
       
       echo "=== Generated YAML ==="

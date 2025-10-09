@@ -1,6 +1,6 @@
 notify:
   - github_commit_status:
-      context: "buildkite/my-pipeline"
+      context: "buildkite/my-pipeline-testing"
     if: build.branch == "main"
     
 steps:

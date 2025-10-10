@@ -11,6 +11,6 @@
     notify:
     - slack:
         channels: 
-          - "ola-testing"
+          - "#ola-testing"
       
   

@@ -1,6 +1,6 @@
 notify:
   - slack:
-      channel: 
+      channels: 
         - "ola-testing"
     if: build.state == "passed"
     

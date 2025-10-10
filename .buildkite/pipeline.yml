@@ -2,7 +2,6 @@ notify:
   - slack:
       channels: 
         - "ola-testing"
-    if: build.state == "passed"
     
 steps:
   - label: ":hammer: Build"

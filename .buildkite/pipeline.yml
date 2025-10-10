@@ -1,7 +1,8 @@
 notify:
-  - github_commit_status:
-      context: "buildkite/my-pipeline-testing"
-    if: build.branch == "main"
+  - slack:
+      channel: 
+        - "ola-testing"
+    if: build.state == "passed"
     
 steps:
   - label: ":hammer: Build"

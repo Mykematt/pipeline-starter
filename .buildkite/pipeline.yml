@@ -8,8 +8,9 @@
       echo "Running tests..."
       sleep 5
       echo "Tests passed!"
+    notify:
+    - slack:
+        channels: 
+          - "ola-testing"
       
-  notify:
-  - slack:
-      channels: 
-        - "ola-testing"
+  

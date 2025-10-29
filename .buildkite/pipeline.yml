@@ -1,16 +1,17 @@
-  steps:
-  - label: ":hammer: Build"
+steps:
+  - label: "Job with dynamic priority"
     command: |
-      echo "Building on branch: \$BUILDKITE_BRANCH"
-    
-  - label: ":test_tube: Tests"
-    command: |
-      echo "Running tests..."
-      sleep 5
-      echo "Tests passed!"
-    notify:
-    - slack:
-        channels: 
-          - "buildkite#ola-testing"
+      if [ "$BUILDKITE_RETRY_COUNT" -eq 0 ]; then
+        PRIORITY=1
+      else
+        PRIORITY=0
+      fi
       
-  
+      buildkite-agent pipeline upload <<YAML
+      steps:
+        - label: "Actual work (priority \$PRIORITY)"
+          command: "echo 'Running tests'; exit 1"
+          priority: \$PRIORITY
+          retry:
+            automatic: true
+      YAML

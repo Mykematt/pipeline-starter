@@ -1,5 +1,5 @@
 steps:
-  - label: "Install Namespace CLI"
+  - label: ":hammer_and_wrench: Install Namespace CLI"
     agents:
       queue: default
     command: |
@@ -7,25 +7,26 @@ steps:
 
       curl -fsSL https://get.namespace.so/cloud/install.sh | sh
 
-      if [ -x /root/.ns/bin/nsc ]; then
-        sudo install -m 755 /root/.ns/bin/nsc /usr/local/bin/nsc
-        sudo chown buildkite-agent:buildkite-agent /usr/local/bin/nsc
-      fi
-
-      if ! command -v nsc >/dev/null 2>&1; then
-        echo "Namespace CLI installation failed" >&2
+      if [ ! -x /var/lib/buildkite-agent/.ns/bin/nsc ]; then
+        echo "Namespace CLI install failed" >&2
         exit 1
       fi
 
-  - label: "Detect Namespace CLI"
+      cat <<'EOF' >> "$BUILDKITE_ENV_FILE"
+      export PATH="/var/lib/buildkite-agent/.ns/bin:$PATH"
+      export NSC_BIN="/var/lib/buildkite-agent/.ns/bin/nsc"
+      EOF
+
+  - label: ":mag: Detect Namespace CLI"
     agents:
       queue: default
     command: |
       set -euo pipefail
 
-      NSC_PATH=$(which nsc 2>/dev/null)
-      if [ -n "${NSC_PATH}" ]; then
-        echo "nsc found at ${NSC_PATH}"
+      NSC_BIN="${NSC_BIN:-/var/lib/buildkite-agent/.ns/bin/nsc}"
+      if [ -x "$NSC_BIN" ]; then
+        echo "nsc found at $NSC_BIN"
+        "$NSC_BIN" --version
       else
         echo "Namespace CLI not found" >&2
         exit 1
@@ -35,13 +36,19 @@ steps:
   #   agents:
   #     queue: default
   #   command: |
-  #     nsc auth exchange-aws-cognito-token \
+  #     set -euo pipefail
+  #     NSC_BIN="${NSC_BIN:-/var/lib/buildkite-agent/.ns/bin/nsc}"
+  #     if [ ! -x "$NSC_BIN" ]; then
+  #       echo "Namespace CLI not available" >&2
+  #       exit 1
+  #     fi
+  #     "$NSC_BIN" auth exchange-aws-cognito-token \
   #       --aws_region us-east-1 \
   #       --identity_pool us-east-1:217947c4-e20e-4315-97f8-08e9a14c8dfb \
   #       --tenant_id tenant_uabmve166l99o
 
-  #     nsc docker buildx setup --background --use
-  #     nsc docker login
+  #     "$NSC_BIN" docker buildx setup --background --use
+  #     "$NSC_BIN" docker login
   #     docker buildx build \
   #       --builder nsc-remote \
   #       --platform linux/amd64,linux/arm64 \

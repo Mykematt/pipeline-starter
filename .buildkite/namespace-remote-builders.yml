@@ -1,24 +1,4 @@
 steps:
-  - label: ":hammer_and_wrench: Install Namespace CLI"
-    agents:
-      queue: default
-    command: |
-      set -euo pipefail
-
-      curl -fsSL https://get.namespace.so/cloud/install.sh | sh
-
-      if [ ! -x /var/lib/buildkite-agent/.ns/bin/nsc ]; then
-        echo "Namespace CLI install failed" >&2
-        exit 1
-      fi
-
-      cat <<'EOF' >> "$BUILDKITE_ENV_FILE"
-      export PATH="/var/lib/buildkite-agent/.ns/bin:$PATH"
-      export NSC_BIN="/var/lib/buildkite-agent/.ns/bin/nsc"
-      EOF
-
-  - wait
-
   - label: ":docker: Build with Namespace"
     agents:
       queue: default

@@ -1,0 +1,30 @@
+steps:
+  - label: ":docker: Build with Namespace"
+    agents:
+      queue: default
+    command: |
+      # Authenticate using AWS Cognito
+      /root/.ns/bin/nsc auth exchange-aws-cognito-token \
+        --aws_region us-east-1 \
+        --identity_pool us-east-1:217947c4-e20e-4315-97f8-08e9a14c8dfb \
+        --tenant_id tenant_uabmve166l99o
+
+      # Configure Namespace Buildx builder and push a multi-platform image
+      /root/.ns/bin/nsc docker buildx setup --background --use
+      /root/.ns/bin/nsc docker login
+      docker buildx build \
+        --builder nsc-remote \
+        --platform linux/amd64,linux/arm64 \
+        -t nscr.io/uabmve166l99o/sample-app:latest \
+        --push \
+        .
+
+      # Alternative: push to another registry
+      # docker buildx build \
+      #   --builder nsc-remote \
+      #   --platform linux/amd64,linux/arm64 \
+      #   -t nscr.io/uabmve166l99o/<image-name>:latest \
+      #   --push \
+      #   .
+      
+

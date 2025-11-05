@@ -4,7 +4,7 @@ steps:
       queue: default
     command: |
       set -euo pipefail
-      NSC_BIN="${NSC_BIN:-/var/lib/buildkite-agent/.ns/bin/nsc}"
+      NSC_BIN="${NSC_BIN:-/root/.ns/bin/nsc}"
       if [ ! -x "$NSC_BIN" ]; then
         echo "Namespace CLI not available" >&2
         exit 1

@@ -18,7 +18,7 @@ steps:
       docker buildx build \
         --builder nsc-remote \
         --platform linux/amd64,linux/arm64 \
-        -t nscr.io/uabmve166l99o/sample-app:latest \
+        -t 097340723131.dkr.ecr.us-east-1.amazonaws.com/your-repo:latest \
         --push \
         .
 

@@ -4,21 +4,17 @@ steps:
       queue: default
     command: |
       set -euo pipefail
-      if [ -x "/usr/local/bin/nsc" ]; then
-        NSC_CMD="/usr/local/bin/nsc"
-      elif sudo test -x "/root/.ns/bin/nsc"; then
-        NSC_CMD="sudo /root/.ns/bin/nsc"
-      else
-        echo "Namespace CLI not available" >&2
+      if [ ! -x "/usr/local/bin/nsc" ]; then
+        echo "Namespace CLI not available at /usr/local/bin/nsc" >&2
         exit 1
       fi
-      eval "$NSC_CMD auth exchange-aws-cognito-token \
+      /usr/local/bin/nsc auth exchange-aws-cognito-token \
         --aws_region us-east-1 \
         --identity_pool us-east-1:217947c4-e20e-4315-97f8-08e9a14c8dfb \
-        --tenant_id tenant_uabmve166l99o"
+        --tenant_id tenant_uabmve166l99o
 
-      eval "$NSC_CMD docker buildx setup --background --use"
-      eval "$NSC_CMD docker login"
+      /usr/local/bin/nsc docker buildx setup --background --use
+      /usr/local/bin/nsc docker login
       docker buildx build \
         --builder nsc-remote \
         --platform linux/amd64,linux/arm64 \

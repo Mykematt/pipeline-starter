@@ -4,18 +4,17 @@ steps:
       queue: default
     command: |
       set -euo pipefail
-      NSC_BIN="${NSC_BIN:-/root/.ns/bin/nsc}"
-      if [ ! -x "$NSC_BIN" ]; then
+      if [ ! -x "/root/.ns/bin/nsc" ]; then
         echo "Namespace CLI not available" >&2
         exit 1
       fi
-      "$NSC_BIN" auth exchange-aws-cognito-token \
+      /root/.ns/bin/nsc auth exchange-aws-cognito-token \
         --aws_region us-east-1 \
         --identity_pool us-east-1:217947c4-e20e-4315-97f8-08e9a14c8dfb \
         --tenant_id tenant_uabmve166l99o
 
-      "$NSC_BIN" docker buildx setup --background --use
-      "$NSC_BIN" docker login
+      /root/.ns/bin/nsc docker buildx setup --background --use
+      /root/.ns/bin/nsc docker login
       docker buildx build \
         --builder nsc-remote \
         --platform linux/amd64,linux/arm64 \

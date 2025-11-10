@@ -46,6 +46,6 @@ steps:
         --local context=. \
         --local dockerfile=. \
         --opt filename=Dockerfile.test \
-        --output type=registry,name=097340723131.dkr.ecr.us-east-1.amazonaws.com/namespace-sample:buildkit-test,push=true
+        --output type=image,name=097340723131.dkr.ecr.us-east-1.amazonaws.com/namespace-sample:buildkit-test,push=true
       
       echo "✅ Successfully built and pushed image using remote BuildKit"

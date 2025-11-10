@@ -1,0 +1,77 @@
+steps:
+  - label: ":hammer: Install BuildKit certificates"
+    command: |
+      set -euo pipefail
+      
+      # Create buildkit directory
+      sudo mkdir -p /etc/buildkit
+      
+      # Download certificates from secrets bucket
+      SECRETS_BUCKET="ola-buildkite-v2-managedsecretsbucket-vooywir52zoo"
+      
+      aws s3 cp "s3://$${SECRETS_BUCKET}/buildkit/ca.crt" /tmp/ca.crt
+      aws s3 cp "s3://$${SECRETS_BUCKET}/buildkit/client.crt" /tmp/client.crt
+      aws s3 cp "s3://$${SECRETS_BUCKET}/buildkit/client.key" /tmp/client.key
+      
+      # Move to /etc/buildkit with correct permissions
+      sudo mv /tmp/ca.crt /etc/buildkit/ca.crt
+      sudo mv /tmp/client.crt /etc/buildkit/client.crt
+      sudo mv /tmp/client.key /etc/buildkit/client.key
+      
+      sudo chmod 644 /etc/buildkit/ca.crt /etc/buildkit/client.crt
+      sudo chmod 600 /etc/buildkit/client.key
+      
+      echo "✅ BuildKit certificates installed successfully"
+      ls -la /etc/buildkit/
+
+  - label: ":docker: Test BuildKit connectivity"
+    depends_on: "step-0"
+    env:
+      BUILDKIT_HOST: "tcp://10.0.2.181:1234"
+      BUILDKIT_TLS_CERT: "/etc/buildkit/client.crt"
+      BUILDKIT_TLS_KEY: "/etc/buildkit/client.key"
+      BUILDKIT_TLS_CA_CERT: "/etc/buildkit/ca.crt"
+    command: |
+      set -euo pipefail
+      
+      echo "Testing connectivity to BuildKit daemon at $${BUILDKIT_HOST}..."
+      
+      # Test connection and list workers
+      buildctl debug workers
+      
+      echo "✅ Successfully connected to remote BuildKit daemon"
+
+  - wait
+
+  - label: ":docker: Build test image"
+    env:
+      BUILDKIT_HOST: "tcp://10.0.2.181:1234"
+      BUILDKIT_TLS_CERT: "/etc/buildkit/client.crt"
+      BUILDKIT_TLS_KEY: "/etc/buildkit/client.key"
+      BUILDKIT_TLS_CA_CERT: "/etc/buildkit/ca.crt"
+    plugins:
+      - ecr#v3.3.0:
+          login: true
+          account-ids:
+            - "097340723131"
+          region: us-east-1
+    command: |
+      set -euo pipefail
+      
+      # Create a simple test Dockerfile
+      cat > Dockerfile.test <<'EOF'
+      FROM alpine:latest
+      RUN echo "Built with remote BuildKit" > /test.txt
+      CMD ["cat", "/test.txt"]
+      EOF
+      
+      echo "Building test image with remote BuildKit..."
+      
+      buildctl build \
+        --frontend dockerfile.v0 \
+        --local context=. \
+        --local dockerfile=. \
+        --opt filename=Dockerfile.test \
+        --output type=registry,name=097340723131.dkr.ecr.us-east-1.amazonaws.com/namespace-sample:buildkit-test,push=true
+      
+      echo "✅ Successfully built and pushed image using remote BuildKit"

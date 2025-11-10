@@ -1,25 +1,13 @@
 steps:
-  - label: ":hammer: Install BuildKit certificates"
+  - label: ":hammer: Verify BuildKit certificates"
     command: |
       set -euo pipefail
       
-      # Create buildkit directory
-      sudo mkdir -p /etc/buildkit
-      
-      # Download certificates from secrets bucket
-      SECRETS_BUCKET="ola-buildkite-v2-managedsecretsbucket-vooywir52zoo"
-      
-      aws s3 cp "s3://$${SECRETS_BUCKET}/buildkit/ca.crt" /tmp/ca.crt
-      aws s3 cp "s3://$${SECRETS_BUCKET}/buildkit/client.crt" /tmp/client.crt
-      aws s3 cp "s3://$${SECRETS_BUCKET}/buildkit/client.key" /tmp/client.key
-      
-      # Move to /etc/buildkit with correct permissions
-      sudo mv /tmp/ca.crt /etc/buildkit/ca.crt
-      sudo mv /tmp/client.crt /etc/buildkit/client.crt
-      sudo mv /tmp/client.key /etc/buildkit/client.key
-      
-      sudo chmod 644 /etc/buildkit/ca.crt /etc/buildkit/client.crt
-      sudo chmod 600 /etc/buildkit/client.key
+      # Verify certificates were installed by bootstrap hook
+      if [ ! -f /etc/buildkit/ca.crt ] || [ ! -f /etc/buildkit/client.crt ] || [ ! -f /etc/buildkit/client.key ]; then
+        echo "❌ BuildKit certificates not found. Bootstrap hook may have failed."
+        exit 1
+      fi
       
       echo "✅ BuildKit certificates installed successfully"
       ls -la /etc/buildkit/

@@ -1,5 +1,6 @@
 steps:
   - label: ":hammer: Verify BuildKit certificates"
+    key: "step-0"
     command: |
       set -euo pipefail
       

@@ -4,21 +4,21 @@ steps:
       set -euo pipefail
       
       # Verify certificates were installed by bootstrap hook
-      if [ ! -f /etc/buildkit/ca.crt ] || [ ! -f /etc/buildkit/client.crt ] || [ ! -f /etc/buildkit/client.key ]; then
+      BUILDKIT_DIR="${HOME}/.buildkit"
+      if [ ! -f "${BUILDKIT_DIR}/ca.crt" ] || [ ! -f "${BUILDKIT_DIR}/client.crt" ] || [ ! -f "${BUILDKIT_DIR}/client.key" ]; then
         echo "❌ BuildKit certificates not found. Bootstrap hook may have failed."
         exit 1
       fi
       
       echo "✅ BuildKit certificates installed successfully"
-      ls -la /etc/buildkit/
+      ls -la "${BUILDKIT_DIR}/"
+      
+      # Verify environment variables are set
+      echo "BUILDKIT_HOST=${BUILDKIT_HOST}"
+      echo "BUILDKIT_TLS_CERT=${BUILDKIT_TLS_CERT}"
 
   - label: ":docker: Test BuildKit connectivity"
     depends_on: "step-0"
-    env:
-      BUILDKIT_HOST: "tcp://10.0.2.181:1234"
-      BUILDKIT_TLS_CERT: "/etc/buildkit/client.crt"
-      BUILDKIT_TLS_KEY: "/etc/buildkit/client.key"
-      BUILDKIT_TLS_CA_CERT: "/etc/buildkit/ca.crt"
     command: |
       set -euo pipefail
       
@@ -32,11 +32,6 @@ steps:
   - wait
 
   - label: ":docker: Build test image"
-    env:
-      BUILDKIT_HOST: "tcp://10.0.2.181:1234"
-      BUILDKIT_TLS_CERT: "/etc/buildkit/client.crt"
-      BUILDKIT_TLS_KEY: "/etc/buildkit/client.key"
-      BUILDKIT_TLS_CA_CERT: "/etc/buildkit/ca.crt"
     plugins:
       - ecr#v3.3.0:
           login: true

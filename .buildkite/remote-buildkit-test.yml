@@ -24,7 +24,7 @@ steps:
 
   - label: ":docker: Build test image"
     plugins:
-      - ecr#v3.3.0:
+      - ecr#v2.10.0:
           login: true
           account-ids:
             - "097340723131"

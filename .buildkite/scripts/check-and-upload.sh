@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PRIMARY_QUEUE=${PRIMARY_QUEUE:-"linux"}
+SECONDARY_QUEUE=${SECONDARY_QUEUE:-"mac"}
+MIN_AVAILABLE=${MIN_AVAILABLE:-1}
+ORG_SLUG=${ORG_SLUG:-${BUILDKITE_ORGANIZATION_SLUG:-""}}
+
+if [[ -z "$ORG_SLUG" ]]; then
+  echo "ORG_SLUG (or BUILDKITE_ORGANIZATION_SLUG) must be set" >&2
+  exit 1
+fi
+
+if ! command -v jq >/dev/null 2>&1; then
+  echo "jq is required on the agent to parse GraphQL responses" >&2
+  exit 1
+fi
+
+GRAPHQL_QUERY=$(cat <<'EOF'
+query OrgAgents($slug: ID!) {
+  organization(slug: $slug) {
+    agents(first: 200) {
+      edges {
+        node {
+          id
+          name
+          connectionState
+          metaData
+          job {
+            __typename
+          }
+        }
+      }
+    }
+  }
+}
+EOF
+)
+
+fetch_agents() {
+  buildkite-agent graphql <<EOF
+{
+  "query": "$GRAPHQL_QUERY",
+  "variables": { "slug": "$ORG_SLUG" }
+}
+EOF
+}
+
+has_capacity() {
+  local queue="$1"
+  local available
+
+  available=$(fetch_agents | jq --arg queue "$queue" '[.data.organization.agents.edges[].node
+    | select(((.metaData // []) | index("queue=" + $queue)) and .connectionState == "CONNECTED" and (.job == null))
+  ]
+  | length')
+
+  [[ "$available" -ge "$MIN_AVAILABLE" ]]
+}
+
+target_queue="$PRIMARY_QUEUE"
+
+if ! has_capacity "$PRIMARY_QUEUE"; then
+  echo "Primary queue '$PRIMARY_QUEUE' lacks available agents; falling back to '$SECONDARY_QUEUE'."
+  target_queue="$SECONDARY_QUEUE"
+else
+  echo "Primary queue '$PRIMARY_QUEUE' has capacity; proceeding."
+fi
+
+cat <<EOF | buildkite-agent pipeline upload
+steps:
+  - label: "Build"
+    command: "echo 'Simulated build'"
+    agents:
+      queue: "$target_queue"
+
+  - wait
+
+  - label: "Test"
+    command: "echo 'Running tests'"
+    agents:
+      queue: "$target_queue"
+EOF

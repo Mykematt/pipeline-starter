@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PRIMARY_QUEUE=${PRIMARY_QUEUE:-"linux"}
-SECONDARY_QUEUE=${SECONDARY_QUEUE:-"kubernetes"}
+SECONDARY_QUEUE=${SECONDARY_QUEUE:-"default"}
 MIN_AVAILABLE=${MIN_AVAILABLE:-1}
 ORG_SLUG=${ORG_SLUG:-${BUILDKITE_ORGANIZATION_SLUG:-""}}
 
@@ -37,8 +37,7 @@ query OrgAgents($slug: ID!) {
 EOF
 )
 
-fetch_agents() {
-  # Make sure a token with GraphQL access is available
+# Make sure a token with GraphQL access is available
 if [[ -z "${BUILDKITE_API_TOKEN:-}" ]]; then
   echo "BUILDKITE_API_TOKEN must be set with GraphQL access" >&2
   exit 1
@@ -50,7 +49,6 @@ fetch_agents() {
     -H "Content-Type: application/json" \
     -d "$(jq -n --arg slug "$ORG_SLUG" --arg query "$GRAPHQL_QUERY" \
            '{ query: $query, variables: { slug: $slug } }')"
-}
 }
 
 has_capacity() {

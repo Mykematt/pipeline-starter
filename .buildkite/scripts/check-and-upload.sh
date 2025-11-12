@@ -44,11 +44,17 @@ if [[ -z "$TOKEN" ]]; then
 fi
 
 fetch_agents() {
-  curl -sS -X POST https://graphql.buildkite.com/v1 \
+  local response
+  response=$(curl -sS -X POST https://graphql.buildkite.com/v1 \
     -H "Authorization: Bearer ${TOKEN}" \
     -H "Content-Type: application/json" \
     -d "$(jq -n --arg slug "$ORG_SLUG" --arg query "$GRAPHQL_QUERY" \
-           '{ query: $query, variables: { slug: $slug } }')"
+           '{ query: $query, variables: { slug: $slug } }')")
+
+  echo "GraphQL response:" >&2
+  echo "$response" | jq '.' >&2 || echo "$response" >&2
+
+  echo "$response"
 }
 
 has_capacity() {

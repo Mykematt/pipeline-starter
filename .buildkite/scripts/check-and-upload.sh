@@ -38,12 +38,19 @@ EOF
 )
 
 fetch_agents() {
-  buildkite-agent graphql <<EOF
-{
-  "query": "$GRAPHQL_QUERY",
-  "variables": { "slug": "$ORG_SLUG" }
+  # Make sure a token with GraphQL access is available
+if [[ -z "${BUILDKITE_API_TOKEN:-}" ]]; then
+  echo "BUILDKITE_API_TOKEN must be set with GraphQL access" >&2
+  exit 1
+fi
+
+fetch_agents() {
+  curl -sS -X POST https://graphql.buildkite.com/v1 \
+    -H "Authorization: Bearer ${BUILDKITE_API_TOKEN}" \
+    -H "Content-Type: application/json" \
+    -d "$(jq -n --arg slug "$ORG_SLUG" --arg query "$GRAPHQL_QUERY" \
+           '{ query: $query, variables: { slug: $slug } }')"
 }
-EOF
 }
 
 has_capacity() {

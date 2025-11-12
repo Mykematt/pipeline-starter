@@ -45,7 +45,7 @@ fi
 
 fetch_agents() {
   curl -sS -X POST https://graphql.buildkite.com/v1 \
-    -H "Authorization: Bearer ${BUILDKITE_API_TOKEN}" \
+    -H "Authorization: Bearer ${TOKEN}" \
     -H "Content-Type: application/json" \
     -d "$(jq -n --arg slug "$ORG_SLUG" --arg query "$GRAPHQL_QUERY" \
            '{ query: $query, variables: { slug: $slug } }')"

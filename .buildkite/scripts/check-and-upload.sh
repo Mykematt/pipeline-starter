@@ -37,8 +37,8 @@ query OrgAgents($slug: ID!) {
 EOF
 )
 
-# Make sure a token with GraphQL access is available
-if [[ -z "${BUILDKITE_API_TOKEN:-}" ]]; then
+TOKEN=${BUILDKITE_API_TOKEN:-${API_ACCESS_TOKEN:-}}
+if [[ -z "$TOKEN" ]]; then
   echo "BUILDKITE_API_TOKEN must be set with GraphQL access" >&2
   exit 1
 fi

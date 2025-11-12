@@ -62,7 +62,7 @@ has_capacity() {
   local available
 
   available=$(fetch_agents | jq --arg queue "$queue" '[.data.organization.agents.edges[].node
-    | select(((.metaData // []) | index("queue=" + $queue)) and .connectionState == "CONNECTED" and (.job == null))
+    | select(((.metaData // []) | index("queue=" + $queue)) and .connectionState == "connected" and (.job == null))
   ]
   | length')
 

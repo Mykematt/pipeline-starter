@@ -1,5 +1,5 @@
 steps:
-  - label: ":docker: Build with Namespace"
+  - label: ":docker: Build with Namespaces"
     agents:
       queue: default
     command: |

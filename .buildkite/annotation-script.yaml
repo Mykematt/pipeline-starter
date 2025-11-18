@@ -1,0 +1,16 @@
+steps:
+  - label: "Annotation from script"
+    command: |
+      cat > test-annotation.sh << 'EOF'
+      #!/bin/bash
+      cat << 'HTML' | buildkite-agent annotate --style "info" --context "css-test-script"
+      <h3 class="mt0">H3 with mt0 class</h3>
+      <p class="mt0">Paragraph with mt0 class</p>
+      <div class="mt0">Div with mt0 class</div>
+      
+      <h3 style="margin-top: 0;">H3 with inline style</h3>
+      HTML
+      EOF
+      
+      chmod +x test-annotation.sh
+      ./test-annotation.sh

@@ -1,0 +1,9 @@
+steps:
+  - command: echo "Triggering with commit ${BUILDKITE_COMMIT}"
+    
+  - trigger: "buildkite-tests"
+    label: "Async trigger to B"
+    async: true
+    build:
+      commit: "${BUILDKITE_COMMIT}"
+      branch: "${BUILDKITE_BRANCH}"

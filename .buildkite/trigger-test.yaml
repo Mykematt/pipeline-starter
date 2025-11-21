@@ -1,12 +1,19 @@
 steps:
-  - label: ":test_tube: Test step with GitHub status"
+  - label: ":rocket: Pipeline A - Main tests"
     command: |
-      echo "Running test..."
-      sleep 5
-      echo "Test complete"
+      echo "Running Pipeline A tests"
+      echo "Commit: ${BUILDKITE_COMMIT}"
+      sleep 3
     notify:
       - github_commit_status:
-          context: "my-test-status"
-      - slack:
-          channels: ["U08SQPXLH26"]
-          message: "Test step finished. Check GitHub for the commit status."
+          context: "buildkite/pipeline-a"
+  
+  - trigger: "buildkite-tests"
+    label: ":arrow_right: Trigger Pipeline B"
+    async: true
+    build:
+      message: "${BUILDKITE_MESSAGE}"
+      commit: "${BUILDKITE_COMMIT}"
+      branch: "${BUILDKITE_BRANCH}"
+      env:
+        PARENT_COMMIT: "${BUILDKITE_COMMIT}"

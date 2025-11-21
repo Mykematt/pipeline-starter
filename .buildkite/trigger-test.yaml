@@ -8,7 +8,7 @@ steps:
       - github_commit_status:
           context: "buildkite/pipeline-a"
   
-  - trigger: "pipeline-b"
+  - trigger: "buildkite-tests"
     label: ":arrow_right: Trigger Pipeline B"
     async: true
     build:

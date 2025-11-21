@@ -7,5 +7,6 @@ steps:
     notify:
       - github_commit_status:
           context: "my-test-status"
-      - slack: U08SQPXLH26
-        message: "Test step finished. Check GitHub for the commit status."
+      - slack:
+          channels: ["U08SQPXLH26"]
+          message: "Test step finished. Check GitHub for the commit status."

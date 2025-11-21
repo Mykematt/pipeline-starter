@@ -3,17 +3,15 @@ steps:
     command: |
       echo "Running Pipeline A tests"
       echo "Commit: ${BUILDKITE_COMMIT}"
-      sleep 2
+      sleep 3
     notify:
       - github_commit_status:
           context: "buildkite/pipeline-a"
   
-  - trigger: "buildkite-tests"
+  - trigger: "pipeline-b"
     label: ":arrow_right: Trigger Pipeline B"
     async: true
     build:
       message: "${BUILDKITE_MESSAGE}"
       commit: "${BUILDKITE_COMMIT}"
       branch: "${BUILDKITE_BRANCH}"
-      env:
-        PARENT_COMMIT: "${BUILDKITE_COMMIT}"

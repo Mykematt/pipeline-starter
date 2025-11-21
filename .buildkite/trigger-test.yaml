@@ -3,7 +3,7 @@ steps:
     command: |
       echo "Running Pipeline A tests"
       echo "Commit: ${BUILDKITE_COMMIT}"
-      sleep 3
+      sleep 2
     notify:
       - github_commit_status:
           context: "buildkite/pipeline-a"

@@ -1,9 +1,11 @@
 steps:
-  - command: echo "Triggering with commit ${BUILDKITE_COMMIT}"
-    
-  - trigger: "buildkite-tests"
-    label: "Async trigger to B"
-    async: true
-    build:
-      commit: "${BUILDKITE_COMMIT}"
-      branch: "${BUILDKITE_BRANCH}"
+  - label: ":test_tube: Test step with GitHub status"
+    command: |
+      echo "Running test..."
+      sleep 5
+      echo "Test complete"
+    notify:
+      - github_commit_status:
+          context: "my-test-status"
+      - slack: U08SQPXLH26
+        message: "Test step finished. Check GitHub for the commit status."

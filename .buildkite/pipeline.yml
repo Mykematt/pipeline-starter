@@ -1,5 +1,5 @@
 steps:
-  - label: "Job with dynamic priority"
+  - label: "Job with dynamic priorityy"
     command: |
       if [ "$BUILDKITE_RETRY_COUNT" -eq 0 ]; then
         PRIORITY=1

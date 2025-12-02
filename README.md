@@ -37,3 +37,4 @@ The build process creates:
 - `build/build-info.txt` - Build metadata
 - `build/manifest.json` - Build manifest with status and version info
 # Test
+# Another test line

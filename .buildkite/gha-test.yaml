@@ -1,0 +1,7 @@
+steps:
+  - label: ":github: GHA Sync Trigger Test"
+    command: |
+      echo "✅ Build triggered successfully from GitHub Actions on PR sync event"
+      echo "Commit: $BUILDKITE_COMMIT"
+      echo "Branch: $BUILDKITE_BRANCH"
+      echo "PR: $BUILDKITE_PULL_REQUEST"

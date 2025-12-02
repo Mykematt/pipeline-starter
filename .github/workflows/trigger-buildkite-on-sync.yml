@@ -1,0 +1,24 @@
+name: Trigger Buildkite on PR Sync
+
+on:
+  pull_request:
+    types: [synchronize]
+
+jobs:
+  trigger-buildkite:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Buildkite Build
+        env:
+          BUILDKITE_API_TOKEN: ${{ secrets.BUILDKITE_API_TOKEN }}
+        run: |
+          curl -X POST "https://api.buildkite.com/v2/organizations/${{ vars.BUILDKITE_ORG_SLUG }}/pipelines/${{ vars.BUILDKITE_PIPELINE_SLUG }}/builds" \
+            -H "Authorization: Bearer $BUILDKITE_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "commit": "${{ github.event.pull_request.head.sha }}",
+              "branch": "${{ github.event.pull_request.head.ref }}",
+              "message": "PR #${{ github.event.pull_request.number }} sync - triggered from GitHub Actions",
+              "pull_request_id": "${{ github.event.pull_request.number }}",
+              "pull_request_base_branch": "${{ github.event.pull_request.base.ref }}"
+            }'

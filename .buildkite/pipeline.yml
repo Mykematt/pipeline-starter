@@ -50,6 +50,13 @@ steps:
         else
           echo "❌ HOOK_VAR from environment hook NOT available"
         fi
+      - echo "--- Checking BUILDKITE_ENV_FILE contents and availability"
+      - 'echo "BUILDKITE_ENV_FILE=$$BUILDKITE_ENV_FILE"'
+      - 'cat "$$BUILDKITE_ENV_FILE" 2>/dev/null || echo "ENV_FILE not accessible"'
+      - echo "--- Testing common BUILDKITE_* env vars"
+      - 'echo "BUILDKITE_AGENT_NAME=$$BUILDKITE_AGENT_NAME"'
+      - 'echo "BUILDKITE_BRANCH=$$BUILDKITE_BRANCH"'
+      - 'echo "BUILDKITE_MESSAGE=$$BUILDKITE_MESSAGE"'
     plugins:
       - kubernetes:
           podSpec:

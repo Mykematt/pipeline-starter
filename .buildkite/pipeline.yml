@@ -34,7 +34,6 @@ steps:
       - |
         if [ "$$PIPELINE_VAR" = "hello-from-pipeline" ]; then
           echo "✅ PIPELINE_VAR propagated correctly"
-          buildkite-agent annotate "✅ Environment variables propagated!" --style success --context env-test --append
         else
           echo "❌ PIPELINE_VAR not propagated (got: $$PIPELINE_VAR)"
           exit 1
@@ -42,6 +41,15 @@ steps:
       - echo "--- Testing BUILDKITE_* vars are available"
       - 'echo "BUILDKITE_BUILD_ID=$$BUILDKITE_BUILD_ID"'
       - 'echo "BUILDKITE_PIPELINE_SLUG=$$BUILDKITE_PIPELINE_SLUG"'
+      - echo "--- Testing vars from environment hook"
+      - 'echo "HOOK_VAR=$$HOOK_VAR"'
+      - 'echo "HOOK_SECRET=$$HOOK_SECRET"'
+      - |
+        if [ -n "$$HOOK_VAR" ]; then
+          echo "✅ HOOK_VAR from environment hook is available"
+        else
+          echo "❌ HOOK_VAR from environment hook NOT available"
+        fi
     plugins:
       - kubernetes:
           podSpec:

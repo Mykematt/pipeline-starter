@@ -1,17 +1,5 @@
 steps:
-  - label: "Job with dynamic priorityy"
-    command: |
-      if [ "$BUILDKITE_RETRY_COUNT" -eq 0 ]; then
-        PRIORITY=1
-      else
-        PRIORITY=0
-      fi
-      
-      buildkite-agent pipeline upload <<YAML
-      steps:
-        - label: "Actual work (priority \$PRIORITY)"
-          command: "echo 'Running tests'; exit 1"
-          priority: \$PRIORITY
-          retry:
-            automatic: true
-      YAML
+  - label: ":test_tube: Test tracing"
+    command: "echo 'Testing tracing behavior'; sleep 2"
+    agents:
+      queue: mac

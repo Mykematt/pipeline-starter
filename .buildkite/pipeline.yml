@@ -1,12 +1,11 @@
-agents:
-  queue: "kubernetes"
-
 env:
   PIPELINE_VAR: "hello-from-pipeline"
   ANOTHER_VAR: "propagated-successfully"
 
 steps:
   - label: ":kubernetes: Test mount-buildkite-agent equivalent"
+    agents:
+      queue: kubernetes
     command:
       - echo "--- Testing buildkite-agent binary availability"
       - which buildkite-agent
@@ -24,45 +23,46 @@ steps:
           podSpec:
             containers:
               - image: alpine:latest
-                command: ["/bin/sh", "-c"]
 
   - label: ":earth_americas: Test propagate-environment equivalent"
+    agents:
+      queue: kubernetes
     command:
       - echo "--- Testing pipeline env vars are propagated"
-      - echo "PIPELINE_VAR=$PIPELINE_VAR"
-      - echo "ANOTHER_VAR=$ANOTHER_VAR"
+      - 'echo "PIPELINE_VAR=$$PIPELINE_VAR"'
+      - 'echo "ANOTHER_VAR=$$ANOTHER_VAR"'
       - |
-        if [ "$PIPELINE_VAR" = "hello-from-pipeline" ]; then
+        if [ "$$PIPELINE_VAR" = "hello-from-pipeline" ]; then
           echo "✅ PIPELINE_VAR propagated correctly"
           buildkite-agent annotate "✅ Environment variables propagated!" --style success --context env-test --append
         else
-          echo "❌ PIPELINE_VAR not propagated"
+          echo "❌ PIPELINE_VAR not propagated (got: $$PIPELINE_VAR)"
           exit 1
         fi
       - echo "--- Testing BUILDKITE_* vars are available"
-      - echo "BUILDKITE_BUILD_ID=$BUILDKITE_BUILD_ID"
-      - echo "BUILDKITE_PIPELINE_SLUG=$BUILDKITE_PIPELINE_SLUG"
-      - echo "BUILDKITE_BRANCH=$BUILDKITE_BRANCH"
+      - 'echo "BUILDKITE_BUILD_ID=$$BUILDKITE_BUILD_ID"'
+      - 'echo "BUILDKITE_PIPELINE_SLUG=$$BUILDKITE_PIPELINE_SLUG"'
     plugins:
       - kubernetes:
           podSpec:
             containers:
               - image: alpine:latest
-                command: ["/bin/sh", "-c"]
 
   - label: ":test_tube: Test step-level env override"
+    agents:
+      queue: kubernetes
     env:
       STEP_VAR: "step-level-value"
       PIPELINE_VAR: "overridden-at-step"
     command:
       - echo "--- Testing step-level env vars"
-      - echo "STEP_VAR=$STEP_VAR"
-      - echo "PIPELINE_VAR=$PIPELINE_VAR (should be overridden)"
+      - 'echo "STEP_VAR=$$STEP_VAR"'
+      - 'echo "PIPELINE_VAR=$$PIPELINE_VAR (should be overridden)"'
       - |
-        if [ "$PIPELINE_VAR" = "overridden-at-step" ]; then
+        if [ "$$PIPELINE_VAR" = "overridden-at-step" ]; then
           echo "✅ Step-level override works"
         else
-          echo "❌ Step-level override failed"
+          echo "❌ Step-level override failed (got: $$PIPELINE_VAR)"
           exit 1
         fi
     plugins:
@@ -70,4 +70,3 @@ steps:
           podSpec:
             containers:
               - image: alpine:latest
-                command: ["/bin/sh", "-c"]

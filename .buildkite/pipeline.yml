@@ -3,13 +3,13 @@ env:
 
 steps:
   # ===== ARTIFACTS APPROACH =====
-  - label: ":package: Artifacts - Install"
+  - label: ":package: Artifacts - Install (UV)"
     agents:
       queue: mac
     command: |
-      python3 -m venv .venv
+      uv venv .venv
       source .venv/bin/activate
-      pip install -r requirements.txt
+      uv pip install -r requirements.txt
       tar -czf venv.tar.gz .venv
       buildkite-agent artifact upload venv.tar.gz
 
@@ -27,7 +27,7 @@ steps:
   - wait
 
   # ===== CACHE PLUGIN APPROACH =====
-  - label: ":floppy_disk: Cache - Install"
+  - label: ":floppy_disk: Cache - Install (UV)"
     agents:
       queue: mac
     plugins:
@@ -38,9 +38,9 @@ steps:
           save: file
           compression: tgz
     command: |
-      python3 -m venv .venv-cached
+      uv venv .venv-cached
       source .venv-cached/bin/activate
-      pip install -r requirements.txt
+      uv pip install -r requirements.txt
 
   - wait
 

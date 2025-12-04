@@ -1,32 +1,95 @@
 env:
-  PIPELINE_VAR: "hello-from-pipeline"
+  BUILDKITE_PLUGIN_S3_CACHE_BUCKET: "buildkite-agent-cache-ola"
 
 steps:
-  - label: ":kubernetes: Test controller-level hooks"
+  - label: ":python: Install deps"
     agents:
       queue: kubernetes
-    command:
-      - echo "--- Testing controller-level hook vars"
-      - 'echo "CONTROLLER_HOOK_VAR=$$CONTROLLER_HOOK_VAR"'
-      - 'echo "CONTROLLER_SECRET=$$CONTROLLER_SECRET"'
-      - |
-        if [ -n "$$CONTROLLER_HOOK_VAR" ]; then
-          echo "✅ Controller-level hook vars ARE available"
-        else
-          echo "❌ Controller-level hook vars NOT available"
-        fi
-      - echo "--- Testing repo-level hook vars (should NOT be available)"
-      - 'echo "HOOK_VAR=$$HOOK_VAR"'
-      - |
-        if [ -z "$$HOOK_VAR" ]; then
-          echo "✅ Confirmed: repo-level hook vars are NOT propagated"
-        else
-          echo "Repo-level hook vars unexpectedly available"
-        fi
-      - echo "--- Testing pipeline env vars"
-      - 'echo "PIPELINE_VAR=$$PIPELINE_VAR"'
     plugins:
+      - cache#v1.8.1:
+          backend: s3
+          path: .venv
+          manifest: requirements.txt
+          save: file
+          compression: tgz
       - kubernetes:
           podSpec:
             containers:
-              - image: alpine:latest
+              - image: python:3.11-slim
+                command: [bash]
+                args:
+                  - -c
+                  - |
+                    echo "--- Creating requirements.txt"
+                    echo "requests==2.31.0" > requirements.txt
+                    echo "--- Installing deps"
+                    python -m venv .venv
+                    source .venv/bin/activate
+                    pip install -r requirements.txt
+                    echo "--- Installed packages:"
+                    pip list
+
+  - wait
+
+  - label: ":test_tube: Step 2 - Use cached deps"
+    agents:
+      queue: kubernetes
+    plugins:
+      - cache#v1.8.1:
+          backend: s3
+          path: .venv
+          manifest: requirements.txt
+          restore: file
+          compression: tgz
+      - kubernetes:
+          podSpec:
+            containers:
+              - image: python:3.11-slim
+                command: [bash]
+                args:
+                  - -c
+                  - |
+                    echo "--- Creating requirements.txt (same as step 1)"
+                    echo "requests==2.31.0" > requirements.txt
+                    echo "--- Checking if .venv was restored from cache"
+                    if [ -d ".venv" ]; then
+                      echo "✅ .venv directory exists!"
+                      source .venv/bin/activate
+                      echo "--- Packages from cache:"
+                      pip list
+                    else
+                      echo "❌ .venv NOT found - cache restore failed"
+                      exit 1
+                    fi
+
+  - wait
+
+  - label: ":test_tube: Step 3 - Also use cached deps"
+    agents:
+      queue: kubernetes
+    plugins:
+      - cache#v1.8.1:
+          backend: s3
+          path: .venv
+          manifest: requirements.txt
+          restore: file
+          compression: tgz
+      - kubernetes:
+          podSpec:
+            containers:
+              - image: python:3.11-slim
+                command: [bash]
+                args:
+                  - -c
+                  - |
+                    echo "--- Creating requirements.txt (same as step 1)"
+                    echo "requests==2.31.0" > requirements.txt
+                    echo "--- Checking if .venv was restored from cache"
+                    if [ -d ".venv" ]; then
+                      echo "✅ .venv directory exists!"
+                      source .venv/bin/activate
+                      pip list
+                    else
+                      echo "❌ .venv NOT found - cache restore failed"
+                      exit 1
+                    fi

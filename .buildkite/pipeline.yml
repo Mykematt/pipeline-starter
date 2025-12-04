@@ -13,7 +13,6 @@ steps:
           save: file
           compression: tgz
     command: |
-      echo "requests==2.31.0" > requirements.txt
       python3 -m venv .venv
       source .venv/bin/activate
       pip install -r requirements.txt
@@ -32,7 +31,6 @@ steps:
           restore: file
           compression: tgz
     command: |
-      echo "requests==2.31.0" > requirements.txt
       if [ -d ".venv" ]; then
         echo "✅ .venv restored from cache!"
         source .venv/bin/activate
@@ -55,7 +53,6 @@ steps:
           restore: file
           compression: tgz
     command: |
-      echo "requests==2.31.0" > requirements.txt
       if [ -d ".venv" ]; then
         echo "✅ .venv restored from cache!"
         source .venv/bin/activate

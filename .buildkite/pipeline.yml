@@ -2,62 +2,56 @@ env:
   BUILDKITE_PLUGIN_S3_CACHE_BUCKET: "ola-buildkite-cache"
 
 steps:
-  - label: ":python: Install deps"
+  # ===== ARTIFACTS APPROACH =====
+  - label: ":package: Artifacts - Install"
     agents:
       queue: mac
-    plugins:
-      - cache#v1.8.1:
-          backend: s3
-          path: .venv
-          manifest: requirements.txt
-          save: file
-          compression: tgz
     command: |
-      python3 -m venv .venv
+      uv venv .venv
+      uv pip install -r requirements.txt
+      tar -czf venv.tar.gz .venv
+      buildkite-agent artifact upload venv.tar.gz
+
+  - wait
+
+  - label: ":white_check_mark: Artifacts - Use deps"
+    agents:
+      queue: mac
+    command: |
+      buildkite-agent artifact download venv.tar.gz .
+      tar -xzf venv.tar.gz
       source .venv/bin/activate
-      pip install -r requirements.txt
       pip list
 
   - wait
 
-  - label: ":test_tube: Step 2 - Use cached deps"
+  # ===== CACHE PLUGIN APPROACH =====
+  - label: ":floppy_disk: Cache - Install"
     agents:
       queue: mac
     plugins:
       - cache#v1.8.1:
           backend: s3
-          path: .venv
+          path: .venv-cached
           manifest: requirements.txt
-          restore: file
+          save: file
           compression: tgz
     command: |
-      if [ -d ".venv" ]; then
-        echo "✅ .venv restored from cache!"
-        source .venv/bin/activate
-        pip list
-      else
-        echo "❌ .venv NOT found"
-        exit 1
-      fi
+      uv venv .venv-cached
+      uv pip install -r requirements.txt --python .venv-cached/bin/python
 
   - wait
 
-  - label: ":test_tube: Step 3 - Also use cached deps"
+  - label: ":white_check_mark: Cache - Use deps"
     agents:
       queue: mac
     plugins:
       - cache#v1.8.1:
           backend: s3
-          path: .venv
+          path: .venv-cached
           manifest: requirements.txt
           restore: file
           compression: tgz
     command: |
-      if [ -d ".venv" ]; then
-        echo "✅ .venv restored from cache!"
-        source .venv/bin/activate
-        pip list
-      else
-        echo "❌ .venv NOT found"
-        exit 1
-      fi
+      source .venv-cached/bin/activate
+      pip list

@@ -1,5 +1,5 @@
 env:
-  BUILDKITE_PLUGIN_S3_CACHE_BUCKET: "buildkite-agent-cache-ola"
+  BUILDKITE_PLUGIN_S3_CACHE_BUCKET: "ola-buildkite-cache"
 
 steps:
   - label: ":python: Install deps"

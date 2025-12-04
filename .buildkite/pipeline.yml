@@ -1,79 +1,66 @@
+env:
+  BUILDKITE_PLUGIN_S3_CACHE_BUCKET: "buildkite-agent-cache-ola"
+
 steps:
   - label: ":python: Install deps"
     agents:
-      queue: kubernetes
+      queue: mac
     plugins:
-      - kubernetes:
-          podSpec:
-            containers:
-              - image: python:3.11-slim
-                command: [bash]
-                args:
-                  - -c
-                  - |
-                    echo "--- Creating requirements.txt"
-                    echo "requests==2.31.0" > requirements.txt
-                    echo "--- Installing deps"
-                    python -m venv .venv
-                    source .venv/bin/activate
-                    pip install -r requirements.txt
-                    echo "--- Installed packages:"
-                    pip list
-                    echo "--- Uploading .venv as artifact"
-                    tar -czf venv.tar.gz .venv
-                    buildkite-agent artifact upload venv.tar.gz
+      - cache#v1.8.1:
+          backend: s3
+          path: .venv
+          manifest: requirements.txt
+          save: file
+          compression: tgz
+    command: |
+      echo "requests==2.31.0" > requirements.txt
+      python3 -m venv .venv
+      source .venv/bin/activate
+      pip install -r requirements.txt
+      pip list
 
   - wait
 
   - label: ":test_tube: Step 2 - Use cached deps"
     agents:
-      queue: kubernetes
+      queue: mac
     plugins:
-      - kubernetes:
-          podSpec:
-            containers:
-              - image: python:3.11-slim
-                command: [bash]
-                args:
-                  - -c
-                  - |
-                    echo "--- Downloading .venv artifact"
-                    buildkite-agent artifact download venv.tar.gz .
-                    tar -xzf venv.tar.gz
-                    echo "--- Checking if .venv was restored"
-                    if [ -d ".venv" ]; then
-                      echo "✅ .venv directory exists!"
-                      source .venv/bin/activate
-                      echo "--- Packages from artifact:"
-                      pip list
-                    else
-                      echo "❌ .venv NOT found"
-                      exit 1
-                    fi
+      - cache#v1.8.1:
+          backend: s3
+          path: .venv
+          manifest: requirements.txt
+          restore: file
+          compression: tgz
+    command: |
+      echo "requests==2.31.0" > requirements.txt
+      if [ -d ".venv" ]; then
+        echo "✅ .venv restored from cache!"
+        source .venv/bin/activate
+        pip list
+      else
+        echo "❌ .venv NOT found"
+        exit 1
+      fi
 
   - wait
 
   - label: ":test_tube: Step 3 - Also use cached deps"
     agents:
-      queue: kubernetes
+      queue: mac
     plugins:
-      - kubernetes:
-          podSpec:
-            containers:
-              - image: python:3.11-slim
-                command: [bash]
-                args:
-                  - -c
-                  - |
-                    echo "--- Downloading .venv artifact"
-                    buildkite-agent artifact download venv.tar.gz .
-                    tar -xzf venv.tar.gz
-                    echo "--- Checking if .venv was restored"
-                    if [ -d ".venv" ]; then
-                      echo "✅ .venv directory exists!"
-                      source .venv/bin/activate
-                      pip list
-                    else
-                      echo "❌ .venv NOT found"
-                      exit 1
-                    fi
+      - cache#v1.8.1:
+          backend: s3
+          path: .venv
+          manifest: requirements.txt
+          restore: file
+          compression: tgz
+    command: |
+      echo "requests==2.31.0" > requirements.txt
+      if [ -d ".venv" ]; then
+        echo "✅ .venv restored from cache!"
+        source .venv/bin/activate
+        pip list
+      else
+        echo "❌ .venv NOT found"
+        exit 1
+      fi

@@ -7,8 +7,9 @@ steps:
     agents:
       queue: mac
     command: |
-      uv venv .venv
-      uv pip install -r requirements.txt
+      python3 -m venv .venv
+      source .venv/bin/activate
+      pip install -r requirements.txt
       tar -czf venv.tar.gz .venv
       buildkite-agent artifact upload venv.tar.gz
 
@@ -37,8 +38,9 @@ steps:
           save: file
           compression: tgz
     command: |
-      uv venv .venv-cached
-      uv pip install -r requirements.txt --python .venv-cached/bin/python
+      python3 -m venv .venv-cached
+      source .venv-cached/bin/activate
+      pip install -r requirements.txt
 
   - wait
 

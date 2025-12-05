@@ -13,7 +13,7 @@ jobs:
         uses: buildkite/trigger-pipeline-action@pipeline-uuid-support
         with:
           buildkite_api_access_token: ${{ secrets.BUILDKITE_API_TOKEN }}
-          pipeline_uuid: "019a55e9-77b9-44c5-b779-b7db9f4dd023"
+          pipeline_uuid: ${{ vars.BUILDKITE_PIPELINE_UUID }}
           branch: ${{ github.head_ref || github.ref_name }}
           commit: ${{ github.event.pull_request.head.sha || github.sha }}
           message: ":github: Triggered via pipeline_uuid"

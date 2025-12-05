@@ -1,0 +1,111 @@
+# Demo pipeline to illustrate Knapsack Pro token behavior
+# This simulates what happens when two test steps share the same API token
+# with the same parallelism value
+
+env:
+  # Simulating a shared Knapsack Pro token (the problematic scenario)
+  SHARED_TOKEN: "same-token-for-both"
+
+steps:
+  - group: ":warning: PROBLEMATIC: Same token + Same parallelism"
+    steps:
+      - label: ":test_tube: Unit Tests (parallelism=2)"
+        parallelism: 2
+        command: |
+          echo "=== Unit Tests Step ==="
+          echo "BUILDKITE_PARALLEL_JOB_COUNT: $BUILDKITE_PARALLEL_JOB_COUNT"
+          echo "BUILDKITE_PARALLEL_JOB: $BUILDKITE_PARALLEL_JOB"
+          echo "KNAPSACK Token: $SHARED_TOKEN"
+          echo ""
+          echo "Knapsack Pro cache key would be:"
+          echo "  (branch=$BUILDKITE_BRANCH, commit=$BUILDKITE_COMMIT, nodes=$BUILDKITE_PARALLEL_JOB_COUNT)"
+          echo ""
+          echo "⚠️  With SAME token and SAME parallelism, both steps"
+          echo "   would share the SAME queue in Knapsack Pro API!"
+        env:
+          TEST_FILE_PATTERN: "spec/models/**/*_spec.rb"
+        agents:
+          queue: mac
+
+      - label: ":sparkles: Feature Tests (parallelism=2)"
+        parallelism: 2
+        command: |
+          echo "=== Feature Tests Step ==="
+          echo "BUILDKITE_PARALLEL_JOB_COUNT: $BUILDKITE_PARALLEL_JOB_COUNT"
+          echo "BUILDKITE_PARALLEL_JOB: $BUILDKITE_PARALLEL_JOB"
+          echo "KNAPSACK Token: $SHARED_TOKEN"
+          echo ""
+          echo "Knapsack Pro cache key would be:"
+          echo "  (branch=$BUILDKITE_BRANCH, commit=$BUILDKITE_COMMIT, nodes=$BUILDKITE_PARALLEL_JOB_COUNT)"
+          echo ""
+          echo "❌ This step might receive unit test files because"
+          echo "   it shares the same queue with Unit Tests step!"
+        env:
+          TEST_FILE_PATTERN: "spec/features/**/*_spec.rb"
+        agents:
+          queue: mac
+
+  - wait
+
+  - group: ":white_check_mark: CORRECT: Separate tokens"
+    steps:
+      - label: ":test_tube: Unit Tests (separate token)"
+        parallelism: 2
+        command: |
+          echo "=== Unit Tests Step ==="
+          echo "BUILDKITE_PARALLEL_JOB_COUNT: $BUILDKITE_PARALLEL_JOB_COUNT"
+          echo "BUILDKITE_PARALLEL_JOB: $BUILDKITE_PARALLEL_JOB"
+          echo "KNAPSACK Token: $UNIT_TEST_TOKEN"
+          echo ""
+          echo "✅ With SEPARATE token, this step has its OWN queue"
+          echo "   and will only receive unit test files."
+        env:
+          UNIT_TEST_TOKEN: "token-for-unit-tests"
+          TEST_FILE_PATTERN: "spec/models/**/*_spec.rb"
+        agents:
+          queue: mac
+
+      - label: ":sparkles: Feature Tests (separate token)"
+        parallelism: 2
+        command: |
+          echo "=== Feature Tests Step ==="
+          echo "BUILDKITE_PARALLEL_JOB_COUNT: $BUILDKITE_PARALLEL_JOB_COUNT"
+          echo "BUILDKITE_PARALLEL_JOB: $BUILDKITE_PARALLEL_JOB"
+          echo "KNAPSACK Token: $FEATURE_TEST_TOKEN"
+          echo ""
+          echo "✅ With SEPARATE token, this step has its OWN queue"
+          echo "   and will only receive feature test files."
+        env:
+          FEATURE_TEST_TOKEN: "token-for-feature-tests"
+          TEST_FILE_PATTERN: "spec/features/**/*_spec.rb"
+        agents:
+          queue: mac
+
+  - wait
+
+  - label: ":memo: Summary"
+    command: |
+      echo "=============================================="
+      echo "KNAPSACK PRO TOKEN BEHAVIOR SUMMARY"
+      echo "=============================================="
+      echo ""
+      echo "THE PROBLEM:"
+      echo "When two steps have:"
+      echo "  - Same API token"
+      echo "  - Same parallelism value"
+      echo "  - Same branch/commit"
+      echo ""
+      echo "Knapsack Pro sees them as ONE test suite and creates"
+      echo "a shared queue. Both steps pull from the same pool of"
+      echo "tests, ignoring TEST_FILE_PATTERN filtering."
+      echo ""
+      echo "THE FIX:"
+      echo "Use SEPARATE API tokens for each test suite:"
+      echo "  - KNAPSACK_PRO_TEST_SUITE_TOKEN_UNIT for unit tests"
+      echo "  - KNAPSACK_PRO_TEST_SUITE_TOKEN_FEATURE for feature tests"
+      echo ""
+      echo "Generate additional tokens at:"
+      echo "https://knapsackpro.com/dashboard"
+      echo "=============================================="
+    agents:
+      queue: mac

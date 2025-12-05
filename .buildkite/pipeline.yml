@@ -1,17 +1,59 @@
+env:
+  BUILDKITE_PLUGIN_S3_CACHE_BUCKET: "ola-buildkite-cache"
+
 steps:
-  - label: "Job with dynamic priorityy"
+  # ===== ARTIFACTS APPROACH =====
+  - label: ":package: Artifacts - Install (UV)"
+    agents:
+      queue: mac
     command: |
-      if [ "$BUILDKITE_RETRY_COUNT" -eq 0 ]; then
-        PRIORITY=1
-      else
-        PRIORITY=0
-      fi
-      
-      buildkite-agent pipeline upload <<YAML
-      steps:
-        - label: "Actual work (priority \$PRIORITY)"
-          command: "echo 'Running tests'; exit 1"
-          priority: \$PRIORITY
-          retry:
-            automatic: true
-      YAML
+      uv venv .venv
+      source .venv/bin/activate
+      uv pip install -r requirements.txt
+      tar -czf venv.tar.gz .venv
+      buildkite-agent artifact upload venv.tar.gz
+
+  - wait
+
+  - label: ":white_check_mark: Artifacts - Use deps"
+    agents:
+      queue: mac
+    command: |
+      buildkite-agent artifact download venv.tar.gz .
+      tar -xzf venv.tar.gz
+      source .venv/bin/activate
+      pip list
+
+  - wait
+
+  # ===== CACHE PLUGIN APPROACH =====
+  - label: ":floppy_disk: Cache - Install (UV)"
+    agents:
+      queue: mac
+    plugins:
+      - cache#v1.8.1:
+          backend: s3
+          path: .venv-cached
+          manifest: requirements.txt
+          save: file
+          compression: tgz
+    command: |
+      uv venv .venv-cached
+      source .venv-cached/bin/activate
+      uv pip install -r requirements.txt
+
+  - wait
+
+  - label: ":white_check_mark: Cache - Use deps"
+    agents:
+      queue: mac
+    plugins:
+      - cache#v1.8.1:
+          backend: s3
+          path: .venv-cached
+          manifest: requirements.txt
+          restore: file
+          compression: tgz
+    command: |
+      source .venv-cached/bin/activate
+      pip list

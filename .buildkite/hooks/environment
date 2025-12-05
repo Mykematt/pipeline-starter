@@ -1,0 +1,4 @@
+#!/bin/bash
+
+export HOOK_VAR="set-in-environment-hook"
+export HOOK_SECRET="secret-from-hook"

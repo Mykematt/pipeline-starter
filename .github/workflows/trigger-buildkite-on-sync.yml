@@ -3,17 +3,18 @@ name: Trigger Buildkite on PR Sync
 on:
   pull_request:
     types: [synchronize]
+  workflow_dispatch:
 
 jobs:
   trigger-buildkite:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Buildkite Build
-        uses: buildkite/trigger-pipeline-action@v2.4.1
+      - name: Trigger Buildkite Build (using pipeline_uuid)
+        uses: buildkite/trigger-pipeline-action@pipeline-uuid-support
         with:
           buildkite_api_access_token: ${{ secrets.BUILDKITE_API_TOKEN }}
-          pipeline: "${{ vars.BUILDKITE_ORG_SLUG }}/${{ vars.BUILDKITE_PIPELINE_SLUG }}"
-          branch: ${{ github.event.pull_request.head.ref }}
-          commit: ${{ github.event.pull_request.head.sha }}
-          message: ":github: PR #${{ github.event.pull_request.number }} sync"
+          pipeline_uuid: "019a55e9-77b9-44c5-b779-b7db9f4dd023"
+          branch: ${{ github.head_ref || github.ref_name }}
+          commit: ${{ github.event.pull_request.head.sha || github.sha }}
+          message: ":github: Triggered via pipeline_uuid"
           send_pull_request: true

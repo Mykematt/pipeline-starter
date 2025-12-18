@@ -1,0 +1,23 @@
+steps:
+  - label: ":test_tube: Test OTEL Environment Variables"
+    command: |
+      echo "=== Original Variables ==="
+      echo "BUILDKITE_BUILD_URL: $BUILDKITE_BUILD_URL"
+      echo "BUILDKITE_JOB_ID: $BUILDKITE_JOB_ID"
+      echo "BUILDKITE_STEP_ID: $BUILDKITE_STEP_ID"
+      echo ""
+      echo "=== New OTEL Variables ==="
+      echo "BUILDKITE_JOB_WEB_URL: $BUILDKITE_JOB_WEB_URL"
+      echo "BUILDKITE_STEP_WEB_URL: $BUILDKITE_STEP_WEB_URL"
+      echo ""
+      # Verify format
+      if [[ "$BUILDKITE_JOB_WEB_URL" == *"#"* ]]; then
+        echo "✅ BUILDKITE_JOB_WEB_URL has correct format"
+      else
+        echo "❌ BUILDKITE_JOB_WEB_URL format is incorrect"
+      fi
+      if [[ "$BUILDKITE_STEP_WEB_URL" == *"#"* ]]; then
+        echo "✅ BUILDKITE_STEP_WEB_URL has correct format"
+      else
+        echo "❌ BUILDKITE_STEP_WEB_URL format is incorrect"
+      fi
